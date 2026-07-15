@@ -6,9 +6,9 @@ export class NotebookController {
     try {
       const data = await notebookService.getWorkspaceData();
       res.status(200).json(data);
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      res.status(500).json({ error: 'Internal server error' });
+      res.status(500).json({ error: error.message || error.toString(), fullError: error });
     }
   }
 

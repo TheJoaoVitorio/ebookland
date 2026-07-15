@@ -31,7 +31,8 @@ export function Workspace() {
   
   // Creation State
   const [isCreating, setIsCreating] = useState(false);
-  const [newNotebookTitle, setNewNotebookTitle] = useState('');
+  const [creationType, setCreationType] = useState<'notebook' | 'folder'>('notebook');
+  const [newItemTitle, setNewItemTitle] = useState('');
   const [selectedColor, setSelectedColor] = useState(COLORS[0].hex);
 
   const navigate = useNavigate();
@@ -50,26 +51,25 @@ export function Workspace() {
     fetchWorkspace();
   }, []);
 
-  const handleCreateNotebook = async () => {
-    if (!newNotebookTitle.trim()) return;
-    await fetch('http://localhost:3001/api/notebooks', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title: newNotebookTitle, coverColor: selectedColor })
-    });
-    setNewNotebookTitle('');
+  const handleCreate = async () => {
+    if (!newItemTitle.trim()) return;
+    
+    if (creationType === 'notebook') {
+      await fetch('http://localhost:3001/api/notebooks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: newItemTitle, coverColor: selectedColor })
+      });
+    } else {
+      await fetch('http://localhost:3001/api/folders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: newItemTitle, color: selectedColor })
+      });
+    }
+    
+    setNewItemTitle('');
     setIsCreating(false);
-    fetchWorkspace();
-  };
-
-  const createFolder = async () => {
-    const name = prompt('Nome da Pasta:');
-    if (!name) return;
-    await fetch('http://localhost:3001/api/folders', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, color: '#E0E0E0' })
-    });
     fetchWorkspace();
   };
 
@@ -95,16 +95,16 @@ export function Workspace() {
             padding: '4rem 2rem', display: 'flex', alignItems: 'center', justifyContent: 'center'
           }}>
             <button 
-              onClick={() => setNewNotebookTitle('')}
+              onClick={() => setNewItemTitle('')}
               style={{ position: 'absolute', top: '15px', right: '15px', background: 'none', border: 'none', cursor: 'pointer', color: '#FF5252' }}
             >
               <Trash2 size={20} />
             </button>
             <input 
               type="text" 
-              value={newNotebookTitle}
-              onChange={(e) => setNewNotebookTitle(e.target.value)}
-              placeholder="Rabisco o nome de um caderno"
+              value={newItemTitle}
+              onChange={(e) => setNewItemTitle(e.target.value)}
+              placeholder={`Rabisco o nome ${creationType === 'notebook' ? 'de um caderno' : 'de uma pasta'}`}
               autoFocus
               style={{
                 border: 'none', background: 'transparent', outline: 'none',
@@ -122,9 +122,11 @@ export function Workspace() {
           border: '1px solid #E0E0E0', borderBottom: 'none'
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-            <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: '#333' }}>Novo Caderno</h3>
+            <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: '#333' }}>
+              Novo {creationType === 'notebook' ? 'Caderno' : 'Pasta'}
+            </h3>
             <button 
-              onClick={handleCreateNotebook}
+              onClick={handleCreate}
               style={{ 
                 backgroundColor: '#000', color: '#FFF', border: 'none', borderRadius: '24px',
                 padding: '8px 24px', fontSize: '1rem', fontWeight: 600, cursor: 'pointer'
@@ -170,14 +172,14 @@ export function Workspace() {
           <p style={{ margin: '5px 0 0 0', color: '#888' }}>Biblioteca</p>
         </div>
         <div style={{ display: 'flex', gap: '10px' }}>
-          <button onClick={createFolder} style={{
+          <button onClick={() => { setCreationType('folder'); setIsCreating(true); }} style={{
             display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px',
             backgroundColor: '#FFF', border: '1px solid #E0E0E0', borderRadius: '8px', cursor: 'pointer',
             fontWeight: 600, color: '#555', boxShadow: '0 2px 5px rgba(0,0,0,0.02)'
           }}>
             <Folder size={18} /> Pasta
           </button>
-          <button onClick={() => setIsCreating(true)} style={{
+          <button onClick={() => { setCreationType('notebook'); setIsCreating(true); }} style={{
             display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px',
             backgroundColor: '#000', color: '#FFF', border: 'none', borderRadius: '8px', cursor: 'pointer',
             fontWeight: 600, boxShadow: '0 2px 10px rgba(0,0,0,0.1)'

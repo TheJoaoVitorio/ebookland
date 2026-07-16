@@ -3,6 +3,7 @@ import { Home } from './pages/Home';
 import { Workspace } from './pages/Workspace';
 import { Reader } from './pages/Reader';
 import { SkeuomorphicLayout } from './components/SkeuomorphicLayout';
+import { ProtectedRoute } from './components/ProtectedRoute';
 import './App.css';
 
 import { AuthProvider } from './contexts/AuthContext';
@@ -14,14 +15,18 @@ function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/workspace" element={
-            <SkeuomorphicLayout>
-              <Workspace />
-            </SkeuomorphicLayout>
+            <ProtectedRoute>
+              <SkeuomorphicLayout>
+                <Workspace />
+              </SkeuomorphicLayout>
+            </ProtectedRoute>
           } />
           <Route path="/reader/:id" element={
-            <SkeuomorphicLayout>
-              <Reader />
-            </SkeuomorphicLayout>
+            <ProtectedRoute>
+              <SkeuomorphicLayout>
+                <Reader />
+              </SkeuomorphicLayout>
+            </ProtectedRoute>
           } />
         </Routes>
       </BrowserRouter>

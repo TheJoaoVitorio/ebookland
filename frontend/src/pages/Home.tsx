@@ -1,6 +1,51 @@
 import { useNavigate } from 'react-router-dom';
 import { Hand } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { useTranslation } from 'react-i18next';
+import { useState, useEffect, useRef } from 'react';
+
+const TypewriterText = ({ text }: { text: string }) => {
+  const [displayed, setDisplayed] = useState('');
+  const [isVisible, setIsVisible] = useState(false);
+  const elementRef = useRef<HTMLSpanElement>(null);
+
+  // Observer para detectar quando o elemento entra na tela
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          setIsVisible(true);
+        } else {
+          // Resetar quando sai da tela para poder re-animar ao voltar (opcional, mas dá um efeito legal)
+          setIsVisible(false);
+          setDisplayed('');
+        }
+      },
+      { threshold: 0.5 } // Só ativa quando 50% do texto estiver visível
+    );
+    
+    if (elementRef.current) {
+      observer.observe(elementRef.current);
+    }
+    return () => observer.disconnect();
+  }, []);
+
+  // Efeito de digitação que só roda se estiver visível
+  useEffect(() => {
+    if (!isVisible) return;
+    
+    setDisplayed('');
+    let i = 0;
+    const timer = setInterval(() => {
+      setDisplayed(text.substring(0, i + 1));
+      i++;
+      if (i >= text.length) clearInterval(timer);
+    }, 25);
+    return () => clearInterval(timer);
+  }, [text, isVisible]);
+
+  return <span ref={elementRef}>{displayed}</span>;
+};
 
 const FeatureCard = ({ title, highlight, items, variant = 'paper' }: any) => {
   const isPostIt = variant === 'postit';
@@ -80,6 +125,10 @@ const FeatureCard = ({ title, highlight, items, variant = 'paper' }: any) => {
 export function Home() {
   const { loginWithGoogle, user } = useAuth();
   const navigate = useNavigate();
+  const { t: originalT, i18n } = useTranslation();
+  
+  // Override t() to wrap all translations in the typing animation automatically!
+  const t = (key: string) => <TypewriterText text={originalT(key)} />;
 
   const handleLogin = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -116,39 +165,64 @@ export function Home() {
           <span style={{ fontSize: '1.2rem', fontWeight: 800, letterSpacing: '-1px' }}>ebooklandia</span>
         </div>
         
-        <button style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '12px',
-          backgroundColor: '#111', // Cor de fita isolante preta
-          padding: '12px 28px',
-          fontFamily: '"Patrick Hand", cursive', // Fonte imitando marcador branco
-          fontSize: '1.3rem',
-          color: '#FFF',
-          cursor: 'pointer',
-          boxShadow: '2px 2px 4px rgba(0,0,0,0.3)',
-          transform: 'rotate(2deg)', // Levemente colado torto
-          transition: 'all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
-          pointerEvents: 'auto',
-          position: 'relative',
-          clipPath: 'polygon(0% 0%, 100% 0%, 98% 10%, 100% 20%, 98% 30%, 100% 40%, 98% 50%, 100% 60%, 98% 70%, 100% 80%, 98% 90%, 100% 100%, 0% 100%, 2% 90%, 0% 80%, 2% 70%, 0% 60%, 2% 50%, 0% 40%, 2% 30%, 0% 20%, 2% 10%)'
-        }}
-        onClick={handleLogin}
-        onMouseOver={(e) => {
-          e.currentTarget.style.transform = 'rotate(0deg) scale(1.05)';
-        }}
-        onMouseOut={(e) => {
-          e.currentTarget.style.transform = 'rotate(2deg) scale(1)';
-        }}
-        >
-          {/* Efeito visual de rasgado nas pontas usando clip-path leve */}
-          <div style={{ position: 'absolute', inset: 0, borderTop: '1px solid rgba(255,255,255,0.15)', borderBottom: '1px solid rgba(255,255,255,0.05)', pointerEvents: 'none' }} />
-          <div style={{ backgroundColor: '#FFF', borderRadius: '50%', padding: '2px', display: 'flex' }}>
-            <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" style={{ width: '18px', height: '18px' }} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: '20px', pointerEvents: 'auto' }}>
+          {/* Language Switcher */}
+          <div style={{ 
+            display: 'flex', alignItems: 'center', backgroundColor: '#FFF', padding: '6px 12px',
+            borderRadius: '24px', border: '2px solid #2B1A07', gap: '8px', 
+            boxShadow: '2px 2px 0px rgba(43, 26, 7, 0.2)',
+            fontFamily: '"Patrick Hand", cursive', fontSize: '1.2rem', color: '#2B1A07',
+            transform: 'rotate(-2deg)'
+          }}>
+            <button 
+              onClick={() => i18n.changeLanguage('pt')} 
+              style={{ opacity: i18n.language.startsWith('pt') ? 1 : 0.4, transform: i18n.language.startsWith('pt') ? 'scale(1.2)' : 'scale(1)', transition: 'all 0.2s', display: 'flex', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}
+              title="Português"
+            >
+              <img src="https://flagcdn.com/w40/br.png" alt="BR" style={{ width: '22px', borderRadius: '2px', boxShadow: '1px 1px 2px rgba(0,0,0,0.2)' }} />
+            </button>
+            <span style={{ color: '#DED6D2' }}>|</span>
+            <button 
+              onClick={() => i18n.changeLanguage('en')}
+              style={{ opacity: !i18n.language.startsWith('pt') ? 1 : 0.4, transform: !i18n.language.startsWith('pt') ? 'scale(1.2)' : 'scale(1)', transition: 'all 0.2s', display: 'flex', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}
+              title="English"
+            >
+              <img src="https://flagcdn.com/w40/us.png" alt="US" style={{ width: '22px', borderRadius: '2px', boxShadow: '1px 1px 2px rgba(0,0,0,0.2)' }} />
+            </button>
           </div>
-          <span style={{ letterSpacing: '1px' }}>Entrar com Google</span>
-        </button>
+
+          <button style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '12px',
+            backgroundColor: '#111',
+            padding: '12px 28px',
+            fontFamily: '"Patrick Hand", cursive',
+            fontSize: '1.3rem',
+            color: '#FFF',
+            cursor: 'pointer',
+            boxShadow: '2px 2px 4px rgba(0,0,0,0.3)',
+            transform: 'rotate(2deg)',
+            transition: 'all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+            position: 'relative',
+            clipPath: 'polygon(0% 0%, 100% 0%, 98% 10%, 100% 20%, 98% 30%, 100% 40%, 98% 50%, 100% 60%, 98% 70%, 100% 80%, 98% 90%, 100% 100%, 0% 100%, 2% 90%, 0% 80%, 2% 70%, 0% 60%, 2% 50%, 0% 40%, 2% 30%, 0% 20%, 2% 10%)'
+          }}
+          onClick={handleLogin}
+          onMouseOver={(e) => {
+            e.currentTarget.style.transform = 'rotate(0deg) scale(1.05)';
+          }}
+          onMouseOut={(e) => {
+            e.currentTarget.style.transform = 'rotate(2deg) scale(1)';
+          }}
+          >
+            <div style={{ position: 'absolute', inset: 0, borderTop: '1px solid rgba(255,255,255,0.15)', borderBottom: '1px solid rgba(255,255,255,0.05)', pointerEvents: 'none' }} />
+            <div style={{ backgroundColor: '#FFF', borderRadius: '50%', padding: '2px', display: 'flex' }}>
+              <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" style={{ width: '18px', height: '18px' }} />
+            </div>
+            <span style={{ letterSpacing: '1px' }}>{t('login_btn')}</span>
+          </button>
+        </div>
       </header>
 
       {/* SEÇÃO 1: HERO */}
@@ -156,15 +230,15 @@ export function Home() {
         <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           {/* Lado Esquerdo - Textos (Absolute Position) */}
           <div style={{ position: 'absolute', left: '10vw', top: '25vh', zIndex: 10, maxWidth: '500px' }}>
-            <p style={{ color: '#F47E3B', fontFamily: '"Caveat", cursive', fontSize: '1.8rem', margin: '0 0 -10px 0', transform: 'rotate(-4deg)' }}>Dear grownups,</p>
+            <p style={{ color: '#F47E3B', fontFamily: '"Caveat", cursive', fontSize: '1.8rem', margin: '0 0 -10px 0', transform: 'rotate(-4deg)' }}>{t('hero_grownups')}</p>
             
             <h1 style={{ fontSize: '7rem', lineHeight: '0.9', color: '#2B1A07', margin: '0 0 2rem 0', fontWeight: 900, letterSpacing: '-4px' }}>
-              meet<br/>ebooklandia
+              {t('hero_meet')}<br/>{t('hero_ebooklandia')}
             </h1>
             
             <p style={{ fontSize: '1.6rem', color: '#2B1A07', lineHeight: '1.3', margin: '0 0 3rem 0', fontWeight: 500 }}>
-              O caderno digital que <span style={{ color: '#F47E3B', fontFamily: '"Caveat", cursive', fontSize: '2rem', fontStyle: 'italic' }}>actually!</span><br/>
-              te dá liberdade total.
+              {t('hero_description1')} <span style={{ color: '#F47E3B', fontFamily: '"Caveat", cursive', fontSize: '2rem', fontStyle: 'italic' }}>{t('hero_actually')}</span><br/>
+              {t('hero_description2')}
             </p>
             
             <div onClick={handleLogin} style={{ textDecoration: 'none' }}>
@@ -189,7 +263,7 @@ export function Home() {
                 e.currentTarget.style.boxShadow = '4px 4px 0px rgba(43, 26, 7, 0.1)';
               }}
               >
-                Eu fico com a prioridade!
+                {t('hero_cta')}
               </button>
             </div>
           </div>
@@ -209,12 +283,12 @@ export function Home() {
               }}>
                 <div style={{ border: '1px solid #2B1A07', width: '100%', height: '100%', borderRadius: '4px', display: 'flex', flexDirection: 'column' }}>
                   <div style={{ flex: 2, borderBottom: '1px solid #2B1A07', display: 'flex', alignItems: 'center', padding: '0 10px' }}>
-                    <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#2B1A07' }}>Name</span>
+                    <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#2B1A07' }}>{t('hero_badge_name')}</span>
                     <span style={{ marginLeft: '20px', fontFamily: '"Caveat", cursive', fontSize: '2.2rem', color: '#2B1A07' }}>João</span>
                   </div>
                   <div style={{ flex: 1, display: 'flex' }}>
                     <div style={{ flex: 1, borderRight: '1px solid #2B1A07', display: 'flex', alignItems: 'center', padding: '0 10px' }}>
-                      <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#2B1A07' }}>Class</span>
+                      <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#2B1A07' }}>{t('hero_badge_class')}</span>
                       <span style={{ marginLeft: '10px', fontSize: '1rem', fontWeight: 800, color: '#2B1A07' }}>VIII-A</span>
                     </div>
                   </div>
@@ -236,13 +310,13 @@ export function Home() {
         }}>
           {/* Elementos flutuantes simulando o Canvas */}
           <div style={{ position: 'absolute', top: '25%', left: '45%', padding: '12px 24px', border: '2px dashed #3B82F6', borderRadius: '8px', background: 'rgba(255,255,255,0.9)', fontFamily: '"Caveat", cursive', fontSize: '2.2rem', color: '#2B1A07', transform: 'rotate(-2deg)', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
-            Clique em qualquer lugar
+            {t('canvas_click')}
           </div>
           <div style={{ position: 'absolute', top: '55%', left: '60%', padding: '12px 24px', border: '1px solid transparent', fontFamily: '"Kalam", cursive', fontSize: '1.8rem', color: '#2B1A07', transform: 'rotate(3deg)' }}>
-            E arraste livremente!
+            {t('canvas_drag')}
           </div>
           <div style={{ position: 'absolute', top: '75%', left: '40%', padding: '12px 24px', border: '1px solid transparent', fontFamily: '"Caveat", cursive', fontSize: '2rem', color: '#2B1A07', transform: 'rotate(-1deg)', opacity: 0.5 }}>
-            (Igual num quadro branco)
+            {t('canvas_like')}
           </div>
         </div>
 
@@ -250,13 +324,13 @@ export function Home() {
         <div style={{ position: 'absolute', top: '50%', left: '8vw', transform: 'translateY(-50%)', zIndex: 10 }}>
           <FeatureCard 
             variant="postit"
-            title="Sinta-se num"
-            highlight="quadro branco"
+            title={t('card1_title')}
+            highlight={t('card1_highlight')}
             items={[
-              { text: 'Sem linhas restritivas', active: true },
-              { text: 'Crie caixas onde quiser', active: false },
-              { text: 'Arraste livremente', active: false },
-              { text: 'Organize suas ideias', active: false }
+              { text: t('card1_item1'), active: true },
+              { text: t('card1_item2'), active: false },
+              { text: t('card1_item3'), active: false },
+              { text: t('card1_item4'), active: false }
             ]}
           />
         </div>
@@ -271,13 +345,13 @@ export function Home() {
           backgroundSize: '100% 32px', backgroundPosition: '0 32px'
         }}>
           <div style={{ position: 'absolute', top: '20%', left: '15%', fontFamily: '"Caveat", cursive', fontSize: '3rem', color: '#2B1A07', transform: 'rotate(-1deg)' }}>
-            Uma coleção de caligrafias.
+            {t('fonts_collection')}
           </div>
           <div style={{ position: 'absolute', top: '40%', left: '20%', fontFamily: '"Kalam", cursive', fontSize: '2.5rem', color: '#F47E3B', transform: 'rotate(2deg)' }}>
-            Para você expressar sua personalidade...
+            {t('fonts_express')}
           </div>
           <div style={{ position: 'absolute', top: '65%', left: '10%', fontFamily: '"Shadows Into Light", cursive', fontSize: '3.5rem', color: '#22C55E', transform: 'rotate(-2deg)' }}>
-            Sem perder a vibe do papel.
+            {t('fonts_vibe')}
           </div>
         </div>
 
@@ -285,13 +359,13 @@ export function Home() {
         <div style={{ position: 'absolute', top: '50%', right: '8vw', transform: 'translateY(-50%)', zIndex: 10 }}>
           <FeatureCard 
             variant="paper"
-            title="A sua letra,"
-            highlight="do seu jeito"
+            title={t('card2_title')}
+            highlight={t('card2_highlight')}
             items={[
-              { text: 'Sensação de papel real', active: true },
-              { text: 'Tipografias do Google Fonts', active: false },
-              { text: 'Caveat, Kalam e muito mais', active: false },
-              { text: 'Troque no menu flutuante', active: false }
+              { text: t('card2_item1'), active: true },
+              { text: t('card2_item2'), active: false },
+              { text: t('card2_item3'), active: false },
+              { text: t('card2_item4'), active: false }
             ]}
           />
         </div>
@@ -314,11 +388,11 @@ export function Home() {
           
           <div style={{ position: 'absolute', top: '35%', left: '8vw', maxWidth: '500px' }}>
             <h2 style={{ fontFamily: '"Kalam", cursive', fontSize: '5rem', lineHeight: '1', color: '#0284C7', transform: 'rotate(-3deg)' }}>
-              Relaxa...<br/>
-              <span style={{ color: '#0369A1' }}>Tá tudo salvo.</span>
+              {t('save_relax')}<br/>
+              <span style={{ color: '#0369A1' }}>{t('save_saved')}</span>
             </h2>
             <p style={{ fontFamily: '"Caveat", cursive', fontSize: '2.5rem', color: '#0EA5E9', marginTop: '20px', transform: 'rotate(-2deg)' }}>
-              Nas nuvens! ☁️
+              {t('save_clouds')}
             </p>
           </div>
         </div>
@@ -338,16 +412,16 @@ export function Home() {
           }}>
             <div style={{ padding: '0 32px', marginBottom: '24px' }}>
               <h2 style={{ fontFamily: '"Patrick Hand", cursive', fontSize: '2.5rem', lineHeight: '1.2', fontWeight: 700, color: '#2B1A07', letterSpacing: '0px' }}>
-                Proteção <br/><span style={{ color: '#0284C7' }}>automática</span>
+                {t('card3_title')} <br/><span style={{ color: '#0284C7' }}>{t('card3_highlight')}</span>
               </h2>
             </div>
             
             <div style={{ display: 'flex', flexDirection: 'column' }}>
               {[
-                { text: 'Esqueça o botão de salvar', active: true },
-                { text: 'Sincronização em tempo real', active: false },
-                { text: 'Seus cadernos na nuvem', active: false },
-                { text: 'Criptografia de dados de ponta', active: false }
+                { text: t('card3_item1'), active: true },
+                { text: t('card3_item2'), active: false },
+                { text: t('card3_item3'), active: false },
+                { text: t('card3_item4'), active: false }
               ].map((item: any, idx: number) => (
                 <div key={idx} style={{ width: '100%' }}>
                   <div style={{ height: '1px', backgroundColor: 'rgba(43, 26, 7, 0.1)', width: '100%' }} />
@@ -380,7 +454,7 @@ export function Home() {
                   onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
                   onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
                   >
-                    Comece a escrever agora
+                    {t('save_cta')}
                   </button>
                 </div>
             </div>

@@ -11,10 +11,13 @@
   },
   "dependencies": {
     "firebase": "^12.16.0",
+    "i18next": "^26.3.6",
+    "i18next-browser-languagedetector": "^8.2.1",
     "lucide-react": "^1.24.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "react-draggable": "^4.7.0",
+    "react-i18next": "^17.0.10",
     "react-pageflip": "^2.0.3",
     "react-router-dom": "^7.18.1",
     "react-sketch-canvas": "^8.0.0"

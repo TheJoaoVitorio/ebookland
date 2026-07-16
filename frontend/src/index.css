@@ -1,0 +1,353 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@400;500;600;700&display=swap');
+
+:root {
+  /* Colors inspired by Superr.ai */
+  --color-bg: #FDFBF9; /* Papel off-white */
+  --color-text: #2B1A07; /* Preto orgânico/Marrom bem escuro */
+  --color-primary: #22C55E; /* Verde vibrante */
+  --color-secondary: #3B82F6; /* Azul brilhante */
+  --color-accent: #FF6F1E; /* Laranja vibrante */
+  
+  --color-surface: #FFFFFF;
+  --color-surface-hover: #F3F0EC;
+  --color-border: rgba(43, 26, 7, 0.1);
+
+  /* Typography */
+  --font-heading: 'Outfit', sans-serif;
+  --font-body: 'Inter', sans-serif;
+
+  /* Layout */
+  --radius-sm: 8px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-full: 9999px;
+
+  /* Shadows */
+  --shadow-sm: 0px 1px 2px 0px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0px 4px 6px -1px rgba(0, 0, 0, 0.1), 0px 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0px 10px 15px -3px rgba(0, 0, 0, 0.1), 0px 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-magic: 0px 4px 20px rgba(34, 197, 94, 0.15);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: var(--color-bg);
+  background-color: #FAFAFA;
+  color: var(--color-text);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+}
+
+/* Skeuomorphic Layout */
+.ipad-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 90vw;
+  max-width: 1200px;
+  height: 85vh;
+  position: relative;
+  margin: auto;
+}
+
+.leather-cover {
+  flex: 1;
+  height: 100%;
+  background: linear-gradient(145deg, #a47656, #8e6244);
+  border-radius: 24px 0 0 24px;
+  box-shadow: inset -5px 0 15px rgba(0,0,0,0.2), 10px 10px 30px rgba(0,0,0,0.1);
+  position: relative;
+  border-right: 2px solid rgba(0,0,0,0.3);
+}
+
+/* Simulate the little logo on bottom left of cover */
+.leather-cover::after {
+  content: '✌️';
+  position: absolute;
+  bottom: 30px;
+  left: 30px;
+  font-size: 2rem;
+  opacity: 0.2;
+  filter: grayscale(100%);
+}
+
+.device-bezel {
+  flex: 1.1;
+  height: 100%;
+  background-color: #EAEAEA;
+  border-radius: 0 24px 24px 0;
+  padding: 16px;
+  box-shadow: 10px 10px 30px rgba(0,0,0,0.15), inset 2px 0 5px rgba(255,255,255,0.8);
+  position: relative;
+}
+
+.device-screen {
+  background-color: #FFF;
+  height: 100%;
+  border-radius: 12px;
+  box-shadow: inset 0 0 10px rgba(0,0,0,0.05);
+  overflow-y: auto;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.pencil {
+  position: absolute;
+  right: -25px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 25px;
+  height: 250px;
+  background: linear-gradient(90deg, #FFC107 40%, #FFB300 60%, #FFA000 100%);
+  border-radius: 4px;
+  box-shadow: 5px 5px 15px rgba(0,0,0,0.2);
+  z-index: -1;
+}
+
+.pencil-eraser {
+  position: absolute;
+  top: -15px;
+  left: 0;
+  width: 100%;
+  height: 15px;
+  background-color: #FF5252;
+  border-radius: 4px 4px 0 0;
+  border-bottom: 3px solid #B0BEC5;
+}
+
+.pencil-tip {
+  position: absolute;
+  bottom: -20px;
+  left: 0;
+  width: 0;
+  height: 0;
+  border-left: 12.5px solid transparent;
+  border-right: 12.5px solid transparent;
+  border-top: 20px solid #D7CCC8;
+}
+
+.pencil-lead {
+  position: absolute;
+  bottom: -20px;
+  left: 10px;
+  width: 0;
+  height: 0;
+  border-left: 2.5px solid transparent;
+  border-right: 2.5px solid transparent;
+  border-top: 4px solid #424242;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+a {
+  color: var(--color-secondary);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+a:hover {
+  color: var(--color-primary);
+}
+
+button {
+  font-family: var(--font-heading);
+  cursor: pointer;
+  border: none;
+  background: none;
+}
+
+/* Base Component Classes */
+.btn-primary {
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  border: 2px solid var(--color-text);
+  padding: 12px 24px;
+  border-radius: var(--radius-lg);
+  font-size: 1.125rem;
+  font-weight: 600;
+  box-shadow: 0px 2px 0px var(--color-text);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0px 4px 0px var(--color-text);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+  box-shadow: 0px 0px 0px var(--color-text);
+}
+
+.magic-card {
+  background-color: var(--color-surface);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--color-border);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.magic-card:hover {
+  transform: translateY(-4px) scale(1.01);
+  box-shadow: var(--shadow-lg), var(--shadow-magic);
+}
+
+/* Custom Superr.ai Cursors */
+* {
+  cursor: url('/cursors/arrow-cursor.svg') 4 4, auto;
+}
+
+a, button, [role="button"], label, select, .cursor-pointer {
+  cursor: url('/cursors/hand-cursor.svg') 6 2, pointer !important;
+}
+
+input, textarea, [contenteditable="true"] {
+  cursor: url('/cursors/text-cursor.svg') 12 12, text !important;
+}
+
+.cursor-grab {
+  cursor: url('/cursors/grab-cursor.svg') 12 12, grab !important;
+}
+
+.cursor-drag, .cursor-grabbing {
+  cursor: url('/cursors/drag-cursor.svg') 12 12, grabbing !important;
+}
+
+/* Notebook Page Templates */
+.template-Blank {
+  background-color: #FFF;
+}
+.template-Wide-Ruled {
+  background-color: #FFF;
+  background-image: linear-gradient(#e0e0e0 1px, transparent 1px);
+  background-size: 100% 32px;
+  background-position: 0 32px;
+}
+.template-Thin-Ruled {
+  background-color: #FFF;
+  background-image: linear-gradient(#e0e0e0 1px, transparent 1px);
+  background-size: 100% 24px;
+  background-position: 0 24px;
+}
+.template-Dotted-Ruled {
+  background-color: #FFF;
+  background-image: linear-gradient(90deg, transparent 2px, #FFF 2px), linear-gradient(#ccc 1px, transparent 1px);
+  background-size: 8px 100%, 100% 24px;
+  background-position: 0 0, 0 24px;
+}
+.template-Dotted {
+  background-color: #FFF;
+  background-image: radial-gradient(#ccc 1px, transparent 1px);
+  background-size: 24px 24px;
+  background-position: 12px 12px;
+}
+.template-Checks {
+  background-color: #FFF;
+  background-image: linear-gradient(#e0e0e0 1px, transparent 1px), linear-gradient(90deg, #e0e0e0 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+.template-Dashed-Checks {
+  background-color: #FFF;
+  background-image: 
+    linear-gradient(90deg, transparent 2px, #FFF 2px), 
+    linear-gradient(transparent 2px, #FFF 2px),
+    linear-gradient(#ccc 1px, transparent 1px),
+    linear-gradient(90deg, #ccc 1px, transparent 1px);
+  background-size: 8px 100%, 100% 8px, 100% 24px, 24px 100%;
+}
+.template-Reticle-Grid {
+  background-color: #FFF;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24'%3E%3Cpath d='M12 9v6M9 12h6' stroke='%23ccc' stroke-width='1'/%3E%3C/svg%3E");
+  background-size: 24px 24px;
+  background-position: 12px 12px;
+}
+
+/* Modal Styling */
+.template-modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.2);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.template-modal {
+  background: #FFF;
+  border-radius: 20px;
+  padding: 30px;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+  position: relative;
+}
+
+.template-modal h2 {
+  font-family: var(--font-heading);
+  margin-bottom: 20px;
+  font-size: 1.5rem;
+}
+
+.template-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 15px;
+}
+
+.template-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.template-preview {
+  width: 60px;
+  height: 80px;
+  border: 1px solid #E0E0E0;
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+}
+
+.template-option.selected .template-preview {
+  border-color: #000;
+  border-width: 2px;
+}
+
+.template-option.selected .check-icon {
+  position: absolute;
+  top: 4px; right: 4px;
+  background: #000;
+  color: #FFF;
+  border-radius: 50%;
+  padding: 2px;
+  width: 14px;
+  height: 14px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.template-name {
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-align: center;
+}

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Folder, Book, X, Trash2, Check, Edit2, MoreVertical, Heart, Library, ArrowUpDown, Clock, ArrowLeft } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { useTranslation } from 'react-i18next';
 import { db } from '../lib/firebase';
 import { collection, getDocs, addDoc, doc, updateDoc, deleteDoc, deleteField } from 'firebase/firestore';
 
@@ -56,6 +57,7 @@ const COVERS = [
 ];
 
 export function Workspace() {
+  const { t, i18n } = useTranslation();
   const [folders, setFolders] = useState<FolderData[]>([]);
   const [standaloneNotebooks, setStandaloneNotebooks] = useState<NotebookData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -155,7 +157,7 @@ export function Workspace() {
   const handleDelete = async (type: 'notebook' | 'folder', id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     if (!user) return;
-    if (!window.confirm(`Tem certeza que deseja excluir est${type === 'notebook' ? 'e caderno' : 'a pasta'}?`)) return;
+    if (!window.confirm(type === 'notebook' ? t('workspace_confirm_delete_notebook') : t('workspace_confirm_delete_folder'))) return;
 
     if (type === 'notebook') {
       await deleteDoc(doc(db, `users/${user.uid}/notebooks`, id));
@@ -185,7 +187,7 @@ export function Workspace() {
     return ((b.createdAt as number) || 0) - ((a.createdAt as number) || 0);
   });
 
-  if (loading) return <div style={{ padding: '2rem' }}>Carregando biblioteca...</div>;
+  if (loading) return <div style={{ padding: '2rem' }}>{t('workspace_loading')}</div>;
 
   const renderNotebookCover = (coverId: string, title: string) => {
     const cover = COVERS.find(c => c.id === coverId);
@@ -358,7 +360,7 @@ export function Workspace() {
                   type="text" 
                   value={itemTitle}
                   onChange={(e) => setItemTitle(e.target.value)}
-                  placeholder={`Scribble a name`}
+                  placeholder={t('workspace_placeholder_name')}
                   autoFocus
                   style={{
                     border: 'none', background: 'transparent', outline: 'none',
@@ -376,7 +378,7 @@ export function Workspace() {
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
                 <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: '#000', fontFamily: 'Outfit, sans-serif' }}>
-                  {modalMode === 'create' ? 'New' : 'Edit'} {itemType === 'notebook' ? 'Notebook' : 'Folder'}
+                  {modalMode === 'create' ? t('workspace_new') : t('workspace_edit')} {itemType === 'notebook' ? t('workspace_notebook') : t('workspace_folder')}
                 </h3>
                 <button 
                   onClick={handleSave}
@@ -385,7 +387,7 @@ export function Workspace() {
                     padding: '8px 24px', fontSize: '0.9rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'Outfit, sans-serif'
                   }}
                 >
-                  {modalMode === 'create' ? 'Create' : 'Save'}
+                  {modalMode === 'create' ? t('workspace_create') : t('workspace_save')}
                 </button>
               </div>
               
@@ -450,27 +452,51 @@ export function Workspace() {
             </>
           ) : (
             <>
-              <h1 style={{ margin: 0, fontSize: '2.4rem', color: '#000', fontWeight: 500, fontFamily: 'Fraunces' }}>My Notes</h1>
-              <span style={{ fontSize: '2.4rem', color: '#A3A3A3', fontWeight: 500, fontFamily: 'Fraunces' }}>Library</span>
+              <h1 style={{ margin: 0, fontSize: '2.4rem', color: '#000', fontWeight: 500, fontFamily: 'Fraunces' }}>{t('workspace_my_notes')}</h1>
+              <span style={{ fontSize: '2.4rem', color: '#A3A3A3', fontWeight: 500, fontFamily: 'Fraunces' }}>{t('workspace_library')}</span>
             </>
           )}
         </div>
         
-        {/* User Avatar no topo direito, totalmente redondo e com borda */}
-        {user && (
-          <div 
-            title="Sair da conta"
-            onClick={logout}
-            style={{
-              width: '46px', height: '46px', borderRadius: '50%',
-              background: user.photoURL ? `url(${user.photoURL}) center/cover` : '#4ADE80',
-              border: '1.5px solid #000', cursor: 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center'
-            }}
-          >
-            {!user.photoURL && <div style={{width: '24px', height: '24px', background: '#FFF', borderRadius: '12px', border: '1.5px solid #000'}}></div>}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+          {/* Language Switcher */}
+          <div style={{ 
+            display: 'flex', flexDirection: 'column', alignItems: 'center', backgroundColor: '#FFF', padding: '8px 6px',
+            borderRadius: '20px', border: '1.5px solid #000', gap: '6px'
+          }}>
+            <button 
+              onClick={() => i18n.changeLanguage('pt')} 
+              style={{ opacity: i18n.language.startsWith('pt') ? 1 : 0.4, transform: i18n.language.startsWith('pt') ? 'scale(1.2)' : 'scale(1)', transition: 'all 0.2s', display: 'flex', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}
+              title="Português"
+            >
+              <img src="https://flagcdn.com/w40/br.png" alt="BR" style={{ width: '18px', borderRadius: '2px', boxShadow: '1px 1px 2px rgba(0,0,0,0.2)' }} />
+            </button>
+            <div style={{ width: '100%', height: '1px', backgroundColor: '#DED6D2' }} />
+            <button 
+              onClick={() => i18n.changeLanguage('en')}
+              style={{ opacity: !i18n.language.startsWith('pt') ? 1 : 0.4, transform: !i18n.language.startsWith('pt') ? 'scale(1.2)' : 'scale(1)', transition: 'all 0.2s', display: 'flex', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}
+              title="English"
+            >
+              <img src="https://flagcdn.com/w40/us.png" alt="US" style={{ width: '18px', borderRadius: '2px', boxShadow: '1px 1px 2px rgba(0,0,0,0.2)' }} />
+            </button>
           </div>
-        )}
+
+          {/* User Avatar no topo direito, totalmente redondo e com borda */}
+          {user && (
+            <div 
+              title="Sair da conta"
+              onClick={logout}
+              style={{
+                width: '46px', height: '46px', borderRadius: '50%',
+                background: user.photoURL ? `url(${user.photoURL}) center/cover` : '#4ADE80',
+                border: '1.5px solid #000', cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center'
+              }}
+            >
+              {!user.photoURL && <div style={{width: '24px', height: '24px', background: '#FFF', borderRadius: '12px', border: '1.5px solid #000'}}></div>}
+            </div>
+          )}
+        </div>
       </div>
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2.5rem' }}>
@@ -480,7 +506,7 @@ export function Workspace() {
             backgroundColor: 'transparent', border: '1.5px solid #000', borderRadius: '20px', cursor: 'pointer',
             fontWeight: 600, color: '#000'
           }}>
-            <Book size={16} /> Notebook
+            <Book size={16} /> {t('workspace_notebook')}
           </button>
           
           {!activeFolderId && (
@@ -489,7 +515,7 @@ export function Workspace() {
               backgroundColor: 'transparent', border: '1.5px solid #000', borderRadius: '20px', cursor: 'pointer',
               fontWeight: 600, color: '#000'
             }}>
-              <Folder size={16} /> Folder
+              <Folder size={16} /> {t('workspace_folder')}
             </button>
           )}
         </div>
@@ -507,25 +533,25 @@ export function Workspace() {
             }}>
               <div style={{ padding: '8px' }}>
                 <button onClick={() => { setFilterView('everything'); setIsMenuOpen(false); }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', padding: '10px', background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '1rem', color: '#000' }}>
-                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}><Library size={18} /> Everything</div>
+                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}><Library size={18} /> {t('workspace_everything')}</div>
                    {filterView === 'everything' && <Check size={18} />}
                 </button>
                 <button onClick={() => { setFilterView('notebooks'); setIsMenuOpen(false); }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', padding: '10px', background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '1rem', color: '#000' }}>
-                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}><Book size={18} /> Notebooks</div>
+                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}><Book size={18} /> {t('workspace_notebooks')}</div>
                    {filterView === 'notebooks' && <Check size={18} />}
                 </button>
                 <button onClick={() => { setFilterView('folders'); setIsMenuOpen(false); }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', padding: '10px', background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '1rem', color: '#000' }}>
-                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}><Folder size={18} /> Folders</div>
+                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}><Folder size={18} /> {t('workspace_folders')}</div>
                    {filterView === 'folders' && <Check size={18} />}
                 </button>
               </div>
               <div style={{ borderTop: '1.5px solid #000', padding: '8px' }}>
                 <button onClick={() => { setSortView('lastModified'); setIsMenuOpen(false); }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', padding: '10px', background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '1rem', color: '#000' }}>
-                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}><Clock size={18} /> Last Modified</div>
+                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}><Clock size={18} /> {t('workspace_last_modified')}</div>
                    {sortView === 'lastModified' && <Check size={18} />}
                 </button>
                 <button onClick={() => { setSortView('alphabetical'); setIsMenuOpen(false); }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', padding: '10px', background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '1rem', color: '#000' }}>
-                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}><ArrowUpDown size={18} /> Alphabetically</div>
+                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}><ArrowUpDown size={18} /> {t('workspace_alphabetically')}</div>
                    {sortView === 'alphabetical' && <Check size={18} />}
                 </button>
               </div>
@@ -561,7 +587,7 @@ export function Workspace() {
                 </div>
 
                 <div style={{ fontFamily: '"Outfit", sans-serif', fontSize: '1.1rem', fontWeight: 700, color: '#000', textAlign: 'center', marginTop: '10px' }}>{folder.name}</div>
-                <div style={{ position: 'absolute', bottom: '15px', fontSize: '0.8rem', color: '#000', opacity: 0.7 }}>{folder.notebooks?.length || 0} items</div>
+                <div style={{ position: 'absolute', bottom: '15px', fontSize: '0.8rem', color: '#000', opacity: 0.7 }}>{folder.notebooks?.length || 0} {t('workspace_items')}</div>
               </div>
             </div>
           </div>

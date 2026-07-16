@@ -6,7 +6,7 @@ const resources = {
   en: {
     translation: {
       "login_btn": "Sign in with Google",
-      "hero_grownups": "Dear grownups,",
+      "hero_grownups": "Dear friends,",
       "hero_meet": "meet",
       "hero_ebooklandia": "ebooklandia",
       "hero_description1": "The digital notebook that",
@@ -49,13 +49,32 @@ const resources = {
       "card3_item3": "Your notebooks in the cloud",
       "card3_item4": "End-to-end data encryption",
       
-      "save_cta": "Start writing now"
+      "save_cta": "Start writing now",
+
+      "workspace_loading": "Loading library...",
+      "workspace_confirm_delete_notebook": "Are you sure you want to delete this notebook?",
+      "workspace_confirm_delete_folder": "Are you sure you want to delete this folder?",
+      "workspace_placeholder_name": "Scribble a name",
+      "workspace_new": "New",
+      "workspace_edit": "Edit",
+      "workspace_notebook": "Notebook",
+      "workspace_folder": "Folder",
+      "workspace_create": "Create",
+      "workspace_save": "Save",
+      "workspace_my_notes": "Notes",
+      "workspace_library": "Library",
+      "workspace_everything": "Everything",
+      "workspace_notebooks": "Notebooks",
+      "workspace_folders": "Folders",
+      "workspace_last_modified": "Last Modified",
+      "workspace_alphabetically": "Alphabetically",
+      "workspace_items": "items"
     }
   },
   pt: {
     translation: {
       "login_btn": "Entrar com Google",
-      "hero_grownups": "Queridos adultos,",
+      "hero_grownups": "Queridos amigos,",
       "hero_meet": "conheça o",
       "hero_ebooklandia": "ebooklandia",
       "hero_description1": "O caderno digital que",
@@ -98,7 +117,26 @@ const resources = {
       "card3_item3": "Seus cadernos na nuvem",
       "card3_item4": "Criptografia de dados de ponta",
       
-      "save_cta": "Comece a escrever agora"
+      "save_cta": "Comece a escrever agora",
+
+      "workspace_loading": "Carregando biblioteca...",
+      "workspace_confirm_delete_notebook": "Tem certeza que deseja excluir este caderno?",
+      "workspace_confirm_delete_folder": "Tem certeza que deseja excluir esta pasta?",
+      "workspace_placeholder_name": "Escreva um nome",
+      "workspace_new": "Novo",
+      "workspace_edit": "Editar",
+      "workspace_notebook": "Caderno",
+      "workspace_folder": "Pasta",
+      "workspace_create": "Criar",
+      "workspace_save": "Salvar",
+      "workspace_my_notes": "Notas",
+      "workspace_library": "Biblioteca",
+      "workspace_everything": "Tudo",
+      "workspace_notebooks": "Cadernos",
+      "workspace_folders": "Pastas",
+      "workspace_last_modified": "Última Modificação",
+      "workspace_alphabetically": "Alfabeticamente",
+      "workspace_items": "itens"
     }
   }
 };

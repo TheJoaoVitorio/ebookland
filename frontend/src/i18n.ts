@@ -68,7 +68,19 @@ const resources = {
       "workspace_folders": "Folders",
       "workspace_last_modified": "Last Modified",
       "workspace_alphabetically": "Alphabetically",
-      "workspace_items": "items"
+      "workspace_items": "items",
+
+      "reader_page_template": "Page Template",
+      "reader_page": "Page",
+      "reader_loading": "Loading notebook...",
+      "template_Blank": "Blank",
+      "template_Wide_Ruled": "Wide Ruled",
+      "template_Thin_Ruled": "Thin Ruled",
+      "template_Dotted_Ruled": "Dotted Ruled",
+      "template_Dotted": "Dotted",
+      "template_Reticle_Grid": "Reticle Grid",
+      "template_Checks": "Checks",
+      "template_Dashed_Checks": "Dashed Checks"
     }
   },
   pt: {
@@ -136,7 +148,19 @@ const resources = {
       "workspace_folders": "Pastas",
       "workspace_last_modified": "Última Modificação",
       "workspace_alphabetically": "Alfabeticamente",
-      "workspace_items": "itens"
+      "workspace_items": "itens",
+
+      "reader_page_template": "Modelo de Página",
+      "reader_page": "Página",
+      "reader_loading": "Carregando caderno...",
+      "template_Blank": "Em Branco",
+      "template_Wide_Ruled": "Pauta Larga",
+      "template_Thin_Ruled": "Pauta Fina",
+      "template_Dotted_Ruled": "Pauta Pontilhada",
+      "template_Dotted": "Pontilhado",
+      "template_Reticle_Grid": "Reticulado",
+      "template_Checks": "Quadriculado",
+      "template_Dashed_Checks": "Quadriculado Tracejado"
     }
   }
 };

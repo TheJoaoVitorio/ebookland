@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useTranslation } from 'react-i18next';
 import { db } from '../lib/firebase';
 import { collection, doc, getDoc, getDocs, setDoc, updateDoc, query, orderBy } from 'firebase/firestore';
 // @ts-ignore
@@ -14,23 +15,24 @@ const TEMPLATES = [
 ];
 
 const TemplateModal = ({ isOpen, onClose, currentTemplate, onSelect }: any) => {
+  const { t } = useTranslation();
   if (!isOpen) return null;
   return (
     <div className="template-modal-overlay" onClick={onClose}>
       <div className="template-modal" onClick={e => e.stopPropagation()}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-          <h2 style={{ margin: 0 }}>Page Template</h2>
+          <h2 style={{ margin: 0 }}>{t('reader_page_template')}</h2>
           <X size={20} className="cursor-pointer" onClick={onClose} />
         </div>
         <div className="template-grid">
-          {TEMPLATES.map(t => {
-            const isSelected = currentTemplate === t;
+          {TEMPLATES.map(templateName => {
+            const isSelected = currentTemplate === templateName;
             return (
-              <div key={t} className={`template-option ${isSelected ? 'selected' : ''}`} onClick={() => onSelect(t)}>
-                <div className={`template-preview template-${t.replace(/ /g, '-')}`}>
+              <div key={templateName} className={`template-option ${isSelected ? 'selected' : ''}`} onClick={() => onSelect(templateName)}>
+                <div className={`template-preview template-${templateName.replace(/ /g, '-')}`}>
                   {isSelected && <div className="check-icon"><Check size={10} strokeWidth={4} /></div>}
                 </div>
-                <div className="template-name">{t}</div>
+                <div className="template-name">{t(`template_${templateName.replace(/ /g, '_')}`)}</div>
               </div>
             );
           })}
@@ -272,6 +274,7 @@ const PageOverlay = ({
   handlePageSave,
   template
 }: any) => {
+  const { t } = useTranslation();
   const [texts, setTexts] = useState<TextBlockData[]>(page.texts || []);
 
   const handleContainerClick = (e: React.MouseEvent) => {
@@ -353,13 +356,14 @@ const PageOverlay = ({
       </div>
 
       <div style={{ position: 'absolute', bottom: '10px', right: '20px', fontSize: '0.8rem', color: '#999', zIndex: 1, pointerEvents: 'none' }}>
-        Página {page.pageNumber}/{pagesLength}
+        {t('reader_page')} {page.pageNumber}/{pagesLength}
       </div>
     </div>
   );
 };
 
 export function Reader() {
+  const { t } = useTranslation();
   const { id } = useParams();
   const [pages, setPages] = useState<EnrichedPage[]>([]);
   const [loading, setLoading] = useState(true);
@@ -475,7 +479,7 @@ export function Reader() {
     await savePage(pageNumber, payload);
   };
 
-  if (loading) return <div>Carregando caderno...</div>;
+  if (loading) return <div>{t('reader_loading')}</div>;
 
   return (
     <div style={{ height: '100%', position: 'relative', background: '#FAFAFA', padding: '2rem', display: 'flex', justifyContent: 'center' }}>

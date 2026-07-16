@@ -1,5 +1,6 @@
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Hand } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 
 const FeatureCard = ({ title, highlight, items, variant = 'paper' }: any) => {
   const isPostIt = variant === 'postit';
@@ -77,6 +78,23 @@ const FeatureCard = ({ title, highlight, items, variant = 'paper' }: any) => {
 };
 
 export function Home() {
+  const { loginWithGoogle, user } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogin = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (user) {
+      navigate('/workspace');
+      return;
+    }
+    try {
+      await loginWithGoogle();
+      navigate('/workspace');
+    } catch (error) {
+      console.error('Failed to log in', error);
+    }
+  };
+
   return (
     <div className="snap-container" style={{ backgroundColor: '#FEFCF5', fontFamily: '"Outfit", "Inter", sans-serif' }}>
       
@@ -116,6 +134,7 @@ export function Home() {
           position: 'relative',
           clipPath: 'polygon(0% 0%, 100% 0%, 98% 10%, 100% 20%, 98% 30%, 100% 40%, 98% 50%, 100% 60%, 98% 70%, 100% 80%, 98% 90%, 100% 100%, 0% 100%, 2% 90%, 0% 80%, 2% 70%, 0% 60%, 2% 50%, 0% 40%, 2% 30%, 0% 20%, 2% 10%)'
         }}
+        onClick={handleLogin}
         onMouseOver={(e) => {
           e.currentTarget.style.transform = 'rotate(0deg) scale(1.05)';
         }}
@@ -147,8 +166,8 @@ export function Home() {
               O caderno digital que <span style={{ color: '#F47E3B', fontFamily: '"Caveat", cursive', fontSize: '2rem', fontStyle: 'italic' }}>actually!</span><br/>
               te dá liberdade total.
             </p>
-
-            <Link to="/workspace" style={{ textDecoration: 'none' }}>
+            
+            <div onClick={handleLogin} style={{ textDecoration: 'none' }}>
               <button style={{
                 backgroundColor: '#FEFCF5',
                 border: '2px solid #2B1A07',
@@ -170,9 +189,9 @@ export function Home() {
                 e.currentTarget.style.boxShadow = '4px 4px 0px rgba(43, 26, 7, 0.1)';
               }}
               >
-                Quero conhecer! iupiii!!!
+                Eu fico com a prioridade!
               </button>
-            </Link>
+            </div>
           </div>
 
           {/* Ilustração Caderno Centralizado no Fundo */}
@@ -344,7 +363,7 @@ export function Home() {
               ))}
             </div>
             <div style={{ padding: '32px', display: 'flex', justifyContent: 'center' }}>
-               <Link to="/workspace" style={{ textDecoration: 'none', width: '100%' }}>
+               <div onClick={handleLogin} style={{ textDecoration: 'none', width: '100%' }}>
                   <button style={{
                     width: '100%',
                     backgroundColor: '#F47E3B',
@@ -363,7 +382,7 @@ export function Home() {
                   >
                     Comece a escrever agora
                   </button>
-                </Link>
+                </div>
             </div>
           </div>
         </div>

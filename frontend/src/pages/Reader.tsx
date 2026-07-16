@@ -1,5 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import { db } from '../lib/firebase';
+import { collection, doc, getDoc, getDocs, setDoc, updateDoc, query, orderBy } from 'firebase/firestore';
 // @ts-ignore
 import HTMLFlipBook from 'react-pageflip';
 import { X, Settings, Headphones, Pencil, Type, Eraser, Undo, Redo, LayoutTemplate, Check, ChevronLeft, ChevronRight } from 'lucide-react';
@@ -52,7 +55,7 @@ interface EnrichedPage {
   drawing: string;
 }
 
-const DraggableTextBlock = ({ block, onUpdate, onRemove, onTriggerSave, mode }: any) => {
+const DraggableTextBlock = ({ block, onUpdate, onRemove, mode }: any) => {
   const [isFocused, setIsFocused] = useState(false);
   const [position, setPosition] = useState({ x: block.x, y: block.y });
   const positionRef = useRef(position);
@@ -367,6 +370,9 @@ export function Reader() {
   
   const flipBookRef = useRef<any>(null);
   const canvasRefs = useRef<{ [key: number]: any }>({});
+  
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
   const parseContent = (raw: string) => {
     if (!raw) return { texts: [], drawing: '' };
@@ -388,50 +394,64 @@ export function Reader() {
   };
 
   useEffect(() => {
-    fetch(`http://localhost:3001/api/notebooks/${id}/pages`)
-      .then(res => res.json())
-      .then(data => {
-        if (data.length === 0) {
+    if (!user) {
+      navigate('/');
+      return;
+    }
+
+    const fetchData = async () => {
+      try {
+        // Fetch pages
+        const pagesRef = collection(db, `users/${user.uid}/notebooks/${id}/pages`);
+        const q = query(pagesRef, orderBy('pageNumber', 'asc'));
+        const querySnapshot = await getDocs(q);
+        
+        if (querySnapshot.empty) {
           setPages([{ id: 'temp', pageNumber: 1, texts: [], drawing: '' }]);
         } else {
-          setPages(data.map((p: any) => ({
-            id: p.id,
-            pageNumber: p.pageNumber,
-            ...parseContent(p.content)
+          setPages(querySnapshot.docs.map(d => ({
+            id: d.id,
+            pageNumber: d.data().pageNumber,
+            ...parseContent(d.data().content)
           })));
         }
-        setLoading(false);
-      });
 
-    fetch(`http://localhost:3001/api/notebooks/${id}`)
-      .then(res => res.json())
-      .then(data => {
-        if (data && data.template) {
-          setTemplate(data.template);
+        // Fetch notebook details (for template)
+        const nbDoc = await getDoc(doc(db, `users/${user.uid}/notebooks/${id}`));
+        if (nbDoc.exists() && nbDoc.data().template) {
+          setTemplate(nbDoc.data().template);
         }
-      })
-      .catch(e => console.error("Could not fetch notebook details", e));
-  }, [id]);
+        
+        setLoading(false);
+      } catch (error) {
+        console.error("Erro ao carregar dados do Firestore", error);
+        setLoading(false);
+      }
+    };
+    
+    fetchData();
+  }, [id, user, navigate]);
 
   const updateTemplate = async (newTemplate: string) => {
+    if (!user) return;
     setTemplate(newTemplate);
     try {
-      await fetch(`http://localhost:3001/api/notebooks/${id}/template`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ template: newTemplate })
-      });
+      await updateDoc(doc(db, `users/${user.uid}/notebooks/${id}`), { template: newTemplate });
     } catch (e) {
       console.error("Failed to update template", e);
     }
   };
 
   const savePage = async (pageNumber: number, payload: string) => {
-    await fetch(`http://localhost:3001/api/notebooks/${id}/pages`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ pageNumber, content: payload })
-    });
+    if (!user) return;
+    try {
+      await setDoc(doc(db, `users/${user.uid}/notebooks/${id}/pages`, pageNumber.toString()), {
+        pageNumber,
+        content: payload
+      });
+    } catch (error) {
+      console.error("Failed to save page", error);
+    }
   };
 
   const handlePageSave = async (newTexts: TextBlockData[], index: number, pageNumber: number) => {
@@ -506,6 +526,7 @@ export function Reader() {
       {/* Flipbook with Navigation */}
       <div style={{ marginTop: '40px', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px' }}>
         
+        {/* @ts-ignore */}
         <HTMLFlipBook 
           width={500} 
           height={650} 
@@ -566,11 +587,12 @@ export function Reader() {
                   const newPages = [...pages, newPage];
                   setPages(newPages);
                   
-                  await fetch(`http://localhost:3001/api/notebooks/${id}/pages`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ pageNumber: newPage.pageNumber, content: JSON.stringify({ texts: [], drawing: '' }) })
-                  });
+                  if (user) {
+                    await setDoc(doc(db, `users/${user.uid}/notebooks/${id}/pages`, newPage.pageNumber.toString()), {
+                      pageNumber: newPage.pageNumber,
+                      content: JSON.stringify({ texts: [], drawing: '' })
+                    });
+                  }
 
                   setTimeout(() => flip.flipNext(), 150);
                 } else {

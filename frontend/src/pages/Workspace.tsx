@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Folder, Book, X, Trash2, Check } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
+import { db } from '../lib/firebase';
+import { collection, getDocs, addDoc } from 'firebase/firestore';
 
 interface NotebookData {
   id: string;
@@ -37,34 +40,44 @@ export function Workspace() {
 
   const navigate = useNavigate();
 
-  const fetchWorkspace = () => {
-    fetch('http://localhost:3001/api/workspace')
-      .then(res => res.json())
-      .then(data => {
-        setFolders(data.folders);
-        setStandaloneNotebooks(data.standaloneNotebooks);
-        setLoading(false);
-      });
+  const { user, logout } = useAuth();
+
+  const fetchWorkspace = async () => {
+    if (!user) return;
+    try {
+      const foldersSnap = await getDocs(collection(db, `users/${user.uid}/folders`));
+      const notebooksSnap = await getDocs(collection(db, `users/${user.uid}/notebooks`));
+      
+      const fData = foldersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })) as FolderData[];
+      const nData = notebooksSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })) as NotebookData[];
+      
+      setFolders(fData);
+      setStandaloneNotebooks(nData);
+      setLoading(false);
+    } catch (error) {
+      console.error("Erro ao buscar dados", error);
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
-    fetchWorkspace();
-  }, []);
+    if (user) fetchWorkspace();
+  }, [user]);
 
   const handleCreate = async () => {
-    if (!newItemTitle.trim()) return;
+    if (!newItemTitle.trim() || !user) return;
     
     if (creationType === 'notebook') {
-      await fetch('http://localhost:3001/api/notebooks', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: newItemTitle, coverColor: selectedColor })
+      await addDoc(collection(db, `users/${user.uid}/notebooks`), { 
+        title: newItemTitle, 
+        coverColor: selectedColor,
+        createdAt: Date.now()
       });
     } else {
-      await fetch('http://localhost:3001/api/folders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: newItemTitle, color: selectedColor })
+      await addDoc(collection(db, `users/${user.uid}/folders`), { 
+        name: newItemTitle, 
+        color: selectedColor,
+        createdAt: Date.now()
       });
     }
     
@@ -171,7 +184,24 @@ export function Workspace() {
           <h1 style={{ margin: 0, fontSize: '1.8rem', color: '#333', fontWeight: 700 }}>Minhas Anotações</h1>
           <p style={{ margin: '5px 0 0 0', color: '#888' }}>Biblioteca</p>
         </div>
-        <div style={{ display: 'flex', gap: '10px' }}>
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+          
+          {/* User Avatar */}
+          {user && (
+            <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: '10px', marginRight: '10px' }}>
+              <div 
+                title="Sair da conta"
+                onClick={logout}
+                style={{
+                  width: '40px', height: '40px', borderRadius: '50%',
+                  background: user.photoURL ? `url(${user.photoURL}) center/cover` : '#E6F564',
+                  border: '2px solid #2B1A07', cursor: 'pointer',
+                  boxShadow: '2px 2px 0px rgba(43,26,7,0.1)'
+                }}
+              />
+            </div>
+          )}
+
           <button onClick={() => { setCreationType('folder'); setIsCreating(true); }} style={{
             display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px',
             backgroundColor: '#FFF', border: '1px solid #E0E0E0', borderRadius: '8px', cursor: 'pointer',

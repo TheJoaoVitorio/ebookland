@@ -162,7 +162,7 @@ export function Home() {
           backgroundColor: 'rgba(254, 252, 245, 0.8)', padding: '8px 16px', borderRadius: '20px', backdropFilter: 'blur(10px)'
         }}>
           <Hand size={28} strokeWidth={2.5} />
-          <span style={{ fontSize: '1.2rem', fontWeight: 800, letterSpacing: '-1px' }}>ebooklandia</span>
+          <span style={{ fontSize: '1.2rem', fontWeight: 800, letterSpacing: '-1px' }}>ebookland</span>
         </div>
         
         <div style={{ display: 'flex', alignItems: 'center', gap: '20px', pointerEvents: 'auto' }}>

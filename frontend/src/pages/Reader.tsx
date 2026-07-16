@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 // @ts-ignore
 import HTMLFlipBook from 'react-pageflip';
-import { X, Settings, Headphones, Pencil, Type, Eraser, Undo, Redo, Save, LayoutTemplate, Check } from 'lucide-react';
+import { X, Settings, Headphones, Pencil, Type, Eraser, Undo, Redo, LayoutTemplate, Check, ChevronLeft, ChevronRight } from 'lucide-react';
 import { ReactSketchCanvas } from 'react-sketch-canvas';
 
 const TEMPLATES = [
@@ -37,20 +37,228 @@ const TemplateModal = ({ isOpen, onClose, currentTemplate, onSelect }: any) => {
   );
 };
 
-interface NotebookPage {
+interface TextBlockData {
   id: string;
-  pageNumber: number;
-  content: string; 
+  x: number;
+  y: number;
+  content: string;
+  fontFamily?: string;
 }
 
 interface EnrichedPage {
   id: string;
   pageNumber: number;
-  text: string;
+  texts: TextBlockData[];
   drawing: string;
 }
 
-// Page Overlay component to isolate state and prevent Flipbook re-renders on keystrokes
+const DraggableTextBlock = ({ block, onUpdate, onRemove, onTriggerSave, mode }: any) => {
+  const [isFocused, setIsFocused] = useState(false);
+  const [position, setPosition] = useState({ x: block.x, y: block.y });
+  const positionRef = useRef(position);
+  const contentRef = useRef<HTMLDivElement>(null);
+  
+  const isDragging = useRef(false);
+  const dragStart = useRef({ startX: 0, startY: 0, initialX: 0, initialY: 0 });
+
+  const [isSelected, setIsSelected] = useState(false);
+
+  useEffect(() => {
+    positionRef.current = position;
+  }, [position]);
+
+  useEffect(() => {
+    setPosition({ x: block.x, y: block.y });
+  }, [block.x, block.y]);
+
+  useEffect(() => {
+    if (block.content === '') {
+      setIsFocused(true);
+      setTimeout(() => {
+        contentRef.current?.focus();
+      }, 50);
+    }
+  }, [block.content]);
+
+  useEffect(() => {
+    const handlePointerMove = (e: PointerEvent) => {
+      if (!isDragging.current) return;
+      e.preventDefault(); 
+      const dx = e.clientX - dragStart.current.startX;
+      const dy = e.clientY - dragStart.current.startY;
+      setPosition({
+        x: dragStart.current.initialX + dx,
+        y: dragStart.current.initialY + dy
+      });
+    };
+
+    const handlePointerUp = () => {
+      if (!isDragging.current) return;
+      isDragging.current = false;
+      onUpdate(block.id, { x: positionRef.current.x, y: positionRef.current.y });
+    };
+
+    window.addEventListener('pointermove', handlePointerMove, { passive: false });
+    window.addEventListener('pointerup', handlePointerUp);
+    return () => {
+      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('pointerup', handlePointerUp);
+    };
+  }, []);
+
+  const handlePointerDown = (e: React.PointerEvent) => {
+    if (mode !== 'write') return;
+    e.stopPropagation();
+    isDragging.current = true;
+    dragStart.current = {
+      startX: e.clientX,
+      startY: e.clientY,
+      initialX: position.x,
+      initialY: position.y
+    };
+  };
+
+  const handleBlur = () => {
+    setIsFocused(false);
+    const text = contentRef.current?.innerText || '';
+    if (text.trim() === '') {
+      onRemove(block.id);
+    } else {
+      onUpdate(block.id, { content: text });
+    }
+  };
+
+  useEffect(() => {
+    if (isFocused && contentRef.current) {
+      setTimeout(() => {
+        contentRef.current?.focus();
+      }, 50);
+    }
+  }, [isFocused]);
+
+  const handleDoubleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (mode === 'write') {
+      setIsFocused(true);
+    }
+  };
+
+  return (
+      <div 
+        style={{ 
+          position: 'absolute', 
+          zIndex: 60,
+          transform: `translate(${position.x}px, ${position.y}px)`,
+          padding: '4px 8px',
+          border: isFocused ? '1px dashed #00bfff' : (isSelected ? '1px solid #00bfff' : '1px solid transparent'),
+          borderRadius: '4px',
+          background: isFocused ? 'rgba(255, 255, 255, 0.9)' : 'transparent',
+          pointerEvents: mode === 'write' ? 'auto' : 'none',
+        }} 
+      >
+        {/* FONT SELECTOR TOOLBAR */}
+        {(isSelected || isFocused) && mode === 'write' && (
+          <div 
+            style={{
+              position: 'absolute',
+              top: '-45px',
+              left: 0,
+              background: 'white',
+              padding: '4px',
+              borderRadius: '6px',
+              boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+              zIndex: 100,
+              display: 'flex',
+              gap: '4px'
+            }} 
+            onPointerDown={(e) => {
+              e.preventDefault(); 
+              e.stopPropagation();
+            }}
+          >
+            {['Caveat', 'Kalam', 'Patrick Hand', 'Shadows Into Light', 'Outfit'].map(f => (
+              <button 
+                key={f}
+                style={{
+                  fontFamily: f,
+                  padding: '4px 8px',
+                  border: (block.fontFamily || 'Caveat') === f ? '1px solid #00bfff' : '1px solid #eee',
+                  background: (block.fontFamily || 'Caveat') === f ? '#e6f7ff' : 'white',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '1.1rem',
+                  lineHeight: '1',
+                  color: '#333'
+                }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onUpdate(block.id, { fontFamily: f });
+                }}
+              >
+                Abc
+              </button>
+            ))}
+          </div>
+        )}
+
+        <div
+          ref={contentRef}
+          contentEditable={true}
+          suppressContentEditableWarning
+          onBlur={handleBlur}
+          onKeyDown={(e) => e.stopPropagation()}
+          style={{
+            fontFamily: block.fontFamily ? `"${block.fontFamily}", cursive` : '"Caveat", cursive',
+            fontSize: '1.4rem',
+            lineHeight: '1.4',
+            outline: 'none',
+            minWidth: '20px',
+            minHeight: '28px',
+            whiteSpace: 'pre-wrap',
+            wordWrap: 'break-word',
+            color: '#333',
+            userSelect: 'text',
+            WebkitUserSelect: 'text',
+            cursor: 'text'
+          }}
+        >
+          {block.content}
+        </div>
+
+        {/* DRAG AND CLICK SHIELD */}
+        {!isFocused && (
+          <div 
+            tabIndex={0}
+            onFocus={() => setIsSelected(true)}
+            onBlur={() => setIsSelected(false)}
+            onPointerDown={(e) => {
+              e.currentTarget.focus();
+              handlePointerDown(e);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Delete' || e.key === 'Backspace') {
+                e.stopPropagation();
+                onRemove(block.id);
+              }
+            }}
+            onDoubleClick={handleDoubleClick}
+            onClick={(e) => {
+              e.stopPropagation();
+              e.currentTarget.focus();
+            }}
+            style={{
+              position: 'absolute',
+              top: 0, left: 0, right: 0, bottom: 0,
+              cursor: mode === 'write' ? 'grab' : 'default',
+              zIndex: 10,
+              outline: 'none'
+            }}
+          />
+        )}
+      </div>
+  );
+};
+
 const PageOverlay = ({ 
   page, 
   index, 
@@ -58,55 +266,71 @@ const PageOverlay = ({
   mode, 
   isEraser, 
   canvasRefs, 
-  checkOverflow, 
-  handleBlur,
+  handlePageSave,
   template
 }: any) => {
-  const [text, setText] = useState(page.text);
+  const [texts, setTexts] = useState<TextBlockData[]>(page.texts || []);
 
-  const onChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const newText = e.target.value;
-    setText(newText);
-    checkOverflow(newText, index, pagesLength);
+  const handleContainerClick = (e: React.MouseEvent) => {
+    if (mode !== 'write') return;
+    
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    const newBlock = {
+      id: 'block-' + Date.now(),
+      x,
+      y,
+      content: '',
+      fontFamily: 'Caveat'
+    };
+    setTexts(prev => [...prev, newBlock]);
+  };
+
+  const updateBlock = (id: string, partial: Partial<TextBlockData>) => {
+    const nextTexts = texts.map(t => t.id === id ? { ...t, ...partial } : t);
+    setTexts(nextTexts);
+    handlePageSave(nextTexts, index, page.pageNumber);
+  };
+
+  const removeBlock = (id: string) => {
+    const nextTexts = texts.filter(t => t.id !== id);
+    setTexts(nextTexts);
+    handlePageSave(nextTexts, index, page.pageNumber);
   };
 
   return (
-    <>
+    <div 
+      style={{ position: 'absolute', inset: 0, overflow: 'hidden', cursor: mode === 'write' ? 'text' : 'default' }}
+      onClick={handleContainerClick}
+      onPointerDown={(e) => {
+        // Only stop propagation if we are clicking directly on the page background in write mode
+        if (mode === 'write') e.stopPropagation();
+      }}
+    >
       {/* Background Template */}
       <div className={`template-${template.replace(/ /g, '-')}`} style={{ 
         position: 'absolute', inset: 0, pointerEvents: 'none', borderRadius: '10px'
       }} />
       
-      {/* Text Area (Write Mode) */}
-      <textarea 
-        value={text}
-        onChange={onChange}
-        onBlur={() => handleBlur(text, index, page.pageNumber)}
-        // Stop propagation so react-pageflip doesn't swallow keyboard focus/clicks
-        onClick={(e) => { e.stopPropagation(); e.currentTarget.focus(); }}
-        onPointerDown={(e) => e.stopPropagation()}
-        onMouseDown={(e) => e.stopPropagation()}
-        onMouseUp={(e) => e.stopPropagation()}
-        onTouchStart={(e) => e.stopPropagation()}
-        onTouchEnd={(e) => e.stopPropagation()}
-        onKeyDown={(e) => e.stopPropagation()}
-        style={{ 
-          width: '100%', height: '100%', background: 'transparent', border: 'none', resize: 'none',
-          padding: '44px 20px 20px 20px', boxSizing: 'border-box',
-          fontFamily: 'monospace', fontSize: '1.2rem', lineHeight: '32px', outline: 'none',
-          position: 'absolute', top: 0, left: 0,
-          zIndex: mode === 'write' ? 50 : 10, 
-          pointerEvents: mode === 'write' ? 'auto' : 'none',
-          userSelect: 'auto', WebkitUserSelect: 'auto'
-        }}
-        data-density="soft"
-      />
+      {/* Text Blocks (Canvas Mode) */}
+      {texts.map(block => (
+        <DraggableTextBlock 
+          key={block.id} 
+          block={block} 
+          onUpdate={updateBlock} 
+          onRemove={removeBlock}
+          mode={mode} 
+        />
+      ))}
 
       {/* Canvas Drawing Area (Draw Mode) */}
       <div 
         onPointerDown={(e) => e.stopPropagation()}
         onMouseDown={(e) => e.stopPropagation()}
         onTouchStart={(e) => e.stopPropagation()}
+        onClick={(e) => e.stopPropagation()}
         style={{
           position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
           zIndex: mode === 'draw' ? 50 : 20,
@@ -121,14 +345,14 @@ const PageOverlay = ({
           eraserWidth={20}
           canvasColor="transparent"
           backgroundImage={page.drawing || ''}
-          onStroke={() => handleBlur(text, index, page.pageNumber)}
+          onStroke={() => handlePageSave(texts, index, page.pageNumber)}
         />
       </div>
 
-      <div style={{ position: 'absolute', bottom: '10px', right: '20px', fontSize: '0.8rem', color: '#999', zIndex: 1 }}>
+      <div style={{ position: 'absolute', bottom: '10px', right: '20px', fontSize: '0.8rem', color: '#999', zIndex: 1, pointerEvents: 'none' }}>
         Página {page.pageNumber}/{pagesLength}
       </div>
-    </>
+    </div>
   );
 };
 
@@ -145,14 +369,21 @@ export function Reader() {
   const canvasRefs = useRef<{ [key: number]: any }>({});
 
   const parseContent = (raw: string) => {
+    if (!raw) return { texts: [], drawing: '' };
     try {
       const parsed = JSON.parse(raw);
-      if (parsed.text !== undefined || parsed.drawing !== undefined) {
-        return { text: parsed.text || '', drawing: parsed.drawing || '' };
+      if (parsed.texts) {
+        return { texts: parsed.texts, drawing: parsed.drawing || '' };
       }
-      return { text: raw, drawing: '' };
+      if (parsed.text !== undefined || parsed.drawing !== undefined) {
+        return { 
+          texts: parsed.text ? [{ id: 'legacy-' + Date.now(), x: 20, y: 44, content: parsed.text }] : [], 
+          drawing: parsed.drawing || '' 
+        };
+      }
+      return { texts: [{ id: 'legacy-raw', x: 20, y: 44, content: raw }], drawing: '' };
     } catch {
-      return { text: raw, drawing: '' };
+      return { texts: [{ id: 'legacy-catch', x: 20, y: 44, content: raw }], drawing: '' };
     }
   };
 
@@ -161,7 +392,7 @@ export function Reader() {
       .then(res => res.json())
       .then(data => {
         if (data.length === 0) {
-          setPages([{ id: 'temp', pageNumber: 1, text: '', drawing: '' }]);
+          setPages([{ id: 'temp', pageNumber: 1, texts: [], drawing: '' }]);
         } else {
           setPages(data.map((p: any) => ({
             id: p.id,
@@ -195,8 +426,7 @@ export function Reader() {
     }
   };
 
-  const savePage = async (pageNumber: number, text: string, drawing: string) => {
-    const payload = JSON.stringify({ text, drawing });
+  const savePage = async (pageNumber: number, payload: string) => {
     await fetch(`http://localhost:3001/api/notebooks/${id}/pages`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -204,22 +434,12 @@ export function Reader() {
     });
   };
 
-  const checkOverflow = (newText: string, index: number, pagesLength: number) => {
-    const lines = newText.split('\n').length;
-    if (lines > 15 && index === pagesLength - 1) {
-      setPages(prev => [...prev, { id: 'temp-' + Date.now(), pageNumber: prev.length + 1, text: '', drawing: '' }]);
-      setTimeout(() => {
-        if (flipBookRef.current) {
-          flipBookRef.current.pageFlip().flipNext();
-        }
-      }, 300);
-    }
-  };
-
-  const handleBlur = async (newText: string, index: number, pageNumber: number) => {
+  const handlePageSave = async (newTexts: TextBlockData[], index: number, pageNumber: number) => {
     const page = pages[index];
     let drawingData = page.drawing;
     const canvas = canvasRefs.current[pageNumber];
+    
+    // Always attempt to get the latest drawing data if canvas is active
     if (canvas) {
       try {
         drawingData = await canvas.exportImage('png');
@@ -227,11 +447,12 @@ export function Reader() {
     }
 
     const newPages = [...pages];
-    newPages[index].text = newText;
+    newPages[index].texts = newTexts;
     newPages[index].drawing = drawingData;
     setPages(newPages);
     
-    await savePage(pageNumber, newText, drawingData);
+    const payload = JSON.stringify({ texts: newTexts, drawing: drawingData });
+    await savePage(pageNumber, payload);
   };
 
   if (loading) return <div>Carregando caderno...</div>;
@@ -282,8 +503,9 @@ export function Reader() {
         }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#555' }}><Redo size={20} /></button>
       </div>
 
-      {/* Flipbook */}
-      <div style={{ marginTop: '40px', width: '100%', display: 'flex', justifyContent: 'center' }}>
+      {/* Flipbook with Navigation */}
+      <div style={{ marginTop: '40px', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px' }}>
+        
         <HTMLFlipBook 
           width={500} 
           height={650} 
@@ -295,6 +517,7 @@ export function Reader() {
           maxShadowOpacity={0.5}
           showCover={false}
           mobileScrollSupport={true}
+          useMouseEvents={false}
           ref={flipBookRef}
           className="notebook-flipbook"
         >
@@ -311,13 +534,59 @@ export function Reader() {
                 mode={mode}
                 isEraser={isEraser}
                 canvasRefs={canvasRefs}
-                checkOverflow={checkOverflow}
-                handleBlur={handleBlur}
+                handlePageSave={handlePageSave}
                 template={template}
               />
             </div>
           ))}
         </HTMLFlipBook>
+
+        {/* Navigation Footer */}
+        <div style={{ width: '100%', maxWidth: '1040px', display: 'flex', justifyContent: 'space-between', padding: '0 10px', marginTop: '0' }}>
+          {/* Prev Button */}
+          <button 
+            onClick={() => flipBookRef.current?.pageFlip().flipPrev()}
+            style={{
+              background: '#FFF', border: '1px solid #E0E0E0', borderRadius: '50%',
+              width: '32px', height: '32px', display: 'flex', justifyContent: 'center', alignItems: 'center',
+              cursor: 'pointer', boxShadow: '0 4px 10px rgba(0,0,0,0.05)', color: '#555', zIndex: 10
+            }}
+          >
+            <ChevronLeft size={18} />
+          </button>
+
+          {/* Next Button */}
+          <button 
+            onClick={async () => {
+              const flip = flipBookRef.current?.pageFlip();
+              if (flip) {
+                const current = flip.getCurrentPageIndex();
+                if (current >= pages.length - 1 || current >= pages.length - 2) {
+                  const newPage = { id: 'page-' + Date.now(), pageNumber: pages.length + 1, texts: [], drawing: '' };
+                  const newPages = [...pages, newPage];
+                  setPages(newPages);
+                  
+                  await fetch(`http://localhost:3001/api/notebooks/${id}/pages`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ pageNumber: newPage.pageNumber, content: JSON.stringify({ texts: [], drawing: '' }) })
+                  });
+
+                  setTimeout(() => flip.flipNext(), 150);
+                } else {
+                  flip.flipNext();
+                }
+              }
+            }}
+            style={{
+              background: '#FFF', border: '1px solid #E0E0E0', borderRadius: '50%',
+              width: '32px', height: '32px', display: 'flex', justifyContent: 'center', alignItems: 'center',
+              cursor: 'pointer', boxShadow: '0 4px 10px rgba(0,0,0,0.05)', color: '#555', zIndex: 10
+            }}
+          >
+            <ChevronRight size={18} />
+          </button>
+        </div>
       </div>
 
       <TemplateModal 

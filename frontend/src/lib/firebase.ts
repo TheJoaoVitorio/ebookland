@@ -16,3 +16,18 @@ export const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const googleProvider = new GoogleAuthProvider();
+
+// Initialize analytics dynamically to prevent adblockers from breaking the app
+export let analytics: any = null;
+
+import("firebase/analytics")
+  .then(({ getAnalytics, isSupported }) => {
+    isSupported().then((supported) => {
+      if (supported) {
+        analytics = getAnalytics(app);
+      }
+    });
+  })
+  .catch((err) => {
+    console.warn("Analytics import failed (likely blocked by an ad blocker):", err);
+  });

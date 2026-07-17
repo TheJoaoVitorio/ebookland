@@ -6,8 +6,10 @@ import { db } from '../lib/firebase';
 import { collection, doc, getDoc, getDocs, setDoc, updateDoc, query, orderBy } from 'firebase/firestore';
 // @ts-ignore
 import HTMLFlipBook from 'react-pageflip';
-import { X, Settings, Headphones, Pencil, Type, Eraser, Undo, Redo, LayoutTemplate, Check, ChevronLeft, ChevronRight } from 'lucide-react';
+import { X, Settings, Headphones, Pencil, Type, Eraser, LayoutTemplate, Check, ChevronLeft, ChevronRight, Square, Circle, Diamond, ArrowRight, Minus } from 'lucide-react';
 import { ReactSketchCanvas } from 'react-sketch-canvas';
+import { DraggableTextBlock, DraggableShapeBlock, renderShapeSvg } from '../components/ReaderBlocks';
+import type { TextBlockData, ShapeBlockData, ReaderMode } from '../components/ReaderBlocks';
 
 const TEMPLATES = [
   'Blank', 'Wide Ruled', 'Thin Ruled', 'Dotted Ruled',
@@ -42,233 +44,13 @@ const TemplateModal = ({ isOpen, onClose, currentTemplate, onSelect }: any) => {
   );
 };
 
-interface TextBlockData {
-  id: string;
-  x: number;
-  y: number;
-  content: string;
-  fontFamily?: string;
-}
-
 interface EnrichedPage {
   id: string;
   pageNumber: number;
   texts: TextBlockData[];
+  shapes: ShapeBlockData[];
   drawing: string;
 }
-
-const DraggableTextBlock = ({ block, onUpdate, onRemove, mode }: any) => {
-  const [isFocused, setIsFocused] = useState(false);
-  const [position, setPosition] = useState({ x: block.x, y: block.y });
-  const positionRef = useRef(position);
-  const contentRef = useRef<HTMLDivElement>(null);
-  
-  const isDragging = useRef(false);
-  const dragStart = useRef({ startX: 0, startY: 0, initialX: 0, initialY: 0 });
-
-  const [isSelected, setIsSelected] = useState(false);
-
-  // Keep a ref to the latest onUpdate to avoid stale closures in the global pointerup listener
-  const onUpdateRef = useRef(onUpdate);
-  useEffect(() => {
-    onUpdateRef.current = onUpdate;
-  }, [onUpdate]);
-
-  useEffect(() => {
-    positionRef.current = position;
-  }, [position]);
-
-  useEffect(() => {
-    setPosition({ x: block.x, y: block.y });
-  }, [block.x, block.y]);
-
-  useEffect(() => {
-    if (block.content === '') {
-      setIsFocused(true);
-      setTimeout(() => {
-        contentRef.current?.focus();
-      }, 50);
-    }
-  }, [block.content]);
-
-  useEffect(() => {
-    const handlePointerMove = (e: PointerEvent) => {
-      if (!isDragging.current) return;
-      e.preventDefault(); 
-      const dx = e.clientX - dragStart.current.startX;
-      const dy = e.clientY - dragStart.current.startY;
-      setPosition({
-        x: dragStart.current.initialX + dx,
-        y: dragStart.current.initialY + dy
-      });
-    };
-
-    const handlePointerUp = () => {
-      if (!isDragging.current) return;
-      isDragging.current = false;
-      onUpdateRef.current(block.id, { x: positionRef.current.x, y: positionRef.current.y });
-    };
-
-    window.addEventListener('pointermove', handlePointerMove, { passive: false });
-    window.addEventListener('pointerup', handlePointerUp);
-    return () => {
-      window.removeEventListener('pointermove', handlePointerMove);
-      window.removeEventListener('pointerup', handlePointerUp);
-    };
-  }, []);
-
-  const handlePointerDown = (e: React.PointerEvent) => {
-    if (mode !== 'write') return;
-    e.stopPropagation();
-    isDragging.current = true;
-    dragStart.current = {
-      startX: e.clientX,
-      startY: e.clientY,
-      initialX: position.x,
-      initialY: position.y
-    };
-  };
-
-  const handleBlur = () => {
-    setIsFocused(false);
-    const text = contentRef.current?.innerText || '';
-    if (text.trim() === '') {
-      onRemove(block.id);
-    } else {
-      onUpdate(block.id, { content: text });
-    }
-  };
-
-  useEffect(() => {
-    if (isFocused && contentRef.current) {
-      setTimeout(() => {
-        contentRef.current?.focus();
-      }, 50);
-    }
-  }, [isFocused]);
-
-  const handleDoubleClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (mode === 'write') {
-      setIsFocused(true);
-    }
-  };
-
-  return (
-      <div 
-        style={{ 
-          position: 'absolute', 
-          zIndex: 60,
-          transform: `translate(${position.x}px, ${position.y}px)`,
-          padding: '4px 8px',
-          border: isFocused ? '1px dashed #00bfff' : (isSelected ? '1px solid #00bfff' : '1px solid transparent'),
-          borderRadius: '4px',
-          background: isFocused ? 'rgba(255, 255, 255, 0.9)' : 'transparent',
-          pointerEvents: mode === 'write' ? 'auto' : 'none',
-        }} 
-      >
-        {/* FONT SELECTOR TOOLBAR */}
-        {(isSelected || isFocused) && mode === 'write' && (
-          <div 
-            style={{
-              position: 'absolute',
-              top: '-45px',
-              left: 0,
-              background: 'white',
-              padding: '4px',
-              borderRadius: '6px',
-              boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-              zIndex: 100,
-              display: 'flex',
-              gap: '4px'
-            }} 
-            onPointerDown={(e) => {
-              e.preventDefault(); 
-              e.stopPropagation();
-            }}
-          >
-            {['Caveat', 'Kalam', 'Patrick Hand', 'Shadows Into Light', 'Outfit'].map(f => (
-              <button 
-                key={f}
-                style={{
-                  fontFamily: f,
-                  padding: '4px 8px',
-                  border: (block.fontFamily || 'Caveat') === f ? '1px solid #00bfff' : '1px solid #eee',
-                  background: (block.fontFamily || 'Caveat') === f ? '#e6f7ff' : 'white',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  fontSize: '1.1rem',
-                  lineHeight: '1',
-                  color: '#333'
-                }}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onUpdate(block.id, { fontFamily: f });
-                }}
-              >
-                Abc
-              </button>
-            ))}
-          </div>
-        )}
-
-        <div
-          ref={contentRef}
-          contentEditable={true}
-          suppressContentEditableWarning
-          onBlur={handleBlur}
-          onKeyDown={(e) => e.stopPropagation()}
-          style={{
-            fontFamily: block.fontFamily ? `"${block.fontFamily}", cursive` : '"Caveat", cursive',
-            fontSize: '1.4rem',
-            lineHeight: '1.4',
-            outline: 'none',
-            minWidth: '20px',
-            minHeight: '28px',
-            whiteSpace: 'pre-wrap',
-            wordWrap: 'break-word',
-            color: '#333',
-            userSelect: 'text',
-            WebkitUserSelect: 'text',
-            cursor: 'text'
-          }}
-        >
-          {block.content}
-        </div>
-
-        {/* DRAG AND CLICK SHIELD */}
-        {!isFocused && (
-          <div 
-            tabIndex={0}
-            onFocus={() => setIsSelected(true)}
-            onBlur={() => setIsSelected(false)}
-            onPointerDown={(e) => {
-              e.currentTarget.focus();
-              handlePointerDown(e);
-            }}
-            onKeyDown={(e) => {
-              if (e.key === 'Delete' || e.key === 'Backspace') {
-                e.stopPropagation();
-                onRemove(block.id);
-              }
-            }}
-            onDoubleClick={handleDoubleClick}
-            onClick={(e) => {
-              e.stopPropagation();
-              e.currentTarget.focus();
-            }}
-            style={{
-              position: 'absolute',
-              top: 0, left: 0, right: 0, bottom: 0,
-              cursor: mode === 'write' ? 'grab' : 'default',
-              zIndex: 10,
-              outline: 'none'
-            }}
-          />
-        )}
-      </div>
-  );
-};
 
 const PageOverlay = ({ 
   page, 
@@ -282,62 +64,115 @@ const PageOverlay = ({
 }: any) => {
   const { t } = useTranslation();
   const [texts, setTexts] = useState<TextBlockData[]>(page.texts || []);
+  const [shapes, setShapes] = useState<ShapeBlockData[]>(page.shapes || []);
+  const [draftShape, setDraftShape] = useState<ShapeBlockData | null>(null);
 
-  const handleContainerClick = (e: React.MouseEvent) => {
-    if (mode !== 'write') return;
-    
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-
-    const newBlock = {
-      id: 'block-' + Date.now(),
-      x,
-      y,
-      content: '',
-      fontFamily: 'Caveat'
-    };
-    setTexts(prev => [...prev, newBlock]);
-  };
+  useEffect(() => {
+    setTexts(page.texts || []);
+    setShapes(page.shapes || []);
+  }, [page]);
 
   const updateBlock = (id: string, partial: Partial<TextBlockData>) => {
     const nextTexts = texts.map(t => t.id === id ? { ...t, ...partial } : t);
     setTexts(nextTexts);
-    handlePageSave(nextTexts, index, page.pageNumber);
+    handlePageSave(nextTexts, shapes, index, page.pageNumber);
   };
 
   const removeBlock = (id: string) => {
     const nextTexts = texts.filter(t => t.id !== id);
     setTexts(nextTexts);
-    handlePageSave(nextTexts, index, page.pageNumber);
+    handlePageSave(nextTexts, shapes, index, page.pageNumber);
+  };
+
+  const updateShape = (id: string, partial: Partial<ShapeBlockData>) => {
+    const nextShapes = shapes.map(s => s.id === id ? { ...s, ...partial } : s);
+    setShapes(nextShapes);
+    handlePageSave(texts, nextShapes, index, page.pageNumber);
+  };
+
+  const removeShape = (id: string) => {
+    const nextShapes = shapes.filter(s => s.id !== id);
+    setShapes(nextShapes);
+    handlePageSave(texts, nextShapes, index, page.pageNumber);
+  };
+
+  const handlePointerDown = (e: React.PointerEvent) => {
+    if (mode === 'write' || mode === 'draw') return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    
+    setDraftShape({
+      id: 'draft',
+      type: mode as any,
+      startX: x,
+      startY: y,
+      endX: x,
+      endY: y
+    });
+  };
+
+  const handlePointerMove = (e: React.PointerEvent) => {
+    if (!draftShape || mode === 'write' || mode === 'draw') return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    setDraftShape(prev => prev ? {
+      ...prev,
+      endX: e.clientX - rect.left,
+      endY: e.clientY - rect.top
+    } : null);
+  };
+
+  const handlePointerUp = () => {
+    if (draftShape) {
+      if (Math.abs(draftShape.startX - draftShape.endX) > 2 || Math.abs(draftShape.startY - draftShape.endY) > 2) {
+        const newShape: ShapeBlockData = { ...draftShape, id: 'shape-' + Date.now() };
+        const nextShapes = [...shapes, newShape];
+        setShapes(nextShapes);
+        handlePageSave(texts, nextShapes, index, page.pageNumber);
+      }
+      setDraftShape(null);
+    }
+  };
+
+  const handleContainerClick = (e: React.MouseEvent) => {
+    if (mode !== 'write') return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    const newBlock: TextBlockData = {
+      id: 'block-' + Date.now(),
+      x,
+      y,
+      content: '',
+      fontFamily: 'Caveat',
+      scale: 1
+    };
+    const nextTexts = [...texts, newBlock];
+    setTexts(nextTexts);
+    handlePageSave(nextTexts, shapes, index, page.pageNumber);
   };
 
   return (
     <div 
-      style={{ position: 'absolute', inset: 0, overflow: 'hidden', cursor: mode === 'write' ? 'text' : 'default' }}
+      style={{ position: 'absolute', inset: 0, overflow: 'hidden', cursor: mode === 'write' ? 'text' : (mode === 'draw' ? 'default' : 'crosshair') }}
       onClick={handleContainerClick}
       onPointerDown={(e) => {
-        // Only stop propagation if we are clicking directly on the page background in write mode
-        if (mode === 'write') e.stopPropagation();
+        if (mode === 'write' || mode === 'draw') e.stopPropagation();
+        else handlePointerDown(e);
       }}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onPointerLeave={handlePointerUp}
     >
       {/* Background Template */}
-      <div className={`template-${template.replace(/ /g, '-')}`} style={{ 
-        position: 'absolute', inset: 0, pointerEvents: 'none', borderRadius: '10px'
-      }} />
+      <div className={`template-${template.replace(/ /g, '-')}`} style={{ position: 'absolute', inset: 0, pointerEvents: 'none', borderRadius: '10px' }} />
       
-      {/* Text Blocks (Canvas Mode) */}
-      {texts.map(block => (
-        <DraggableTextBlock 
-          key={block.id} 
-          block={block} 
-          onUpdate={updateBlock} 
-          onRemove={removeBlock}
-          mode={mode} 
-        />
-      ))}
+      {texts.map(block => <DraggableTextBlock key={block.id} block={block} onUpdate={updateBlock} onRemove={removeBlock} mode={mode} />)}
+      {shapes.map(shape => <DraggableShapeBlock key={shape.id} block={shape} onUpdate={updateShape} onRemove={removeShape} mode={mode} />)}
+      
+      {draftShape && renderShapeSvg(draftShape, true)}
 
-      {/* Canvas Drawing Area (Draw Mode) */}
       <div 
         onPointerDown={(e) => e.stopPropagation()}
         onMouseDown={(e) => e.stopPropagation()}
@@ -347,7 +182,7 @@ const PageOverlay = ({
           position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
           zIndex: mode === 'draw' ? 50 : 20,
           pointerEvents: mode === 'draw' ? 'auto' : 'none',
-          opacity: 1 // Keep drawings always visible
+          opacity: 1
         }}
       >
         <ReactSketchCanvas
@@ -357,7 +192,7 @@ const PageOverlay = ({
           eraserWidth={20}
           canvasColor="transparent"
           backgroundImage={page.drawing || ''}
-          onStroke={() => handlePageSave(texts, index, page.pageNumber)}
+          onStroke={() => handlePageSave(texts, shapes, index, page.pageNumber)}
         />
       </div>
 
@@ -373,7 +208,7 @@ export function Reader() {
   const { id } = useParams();
   const [pages, setPages] = useState<EnrichedPage[]>([]);
   const [loading, setLoading] = useState(true);
-  const [mode, setMode] = useState<'write' | 'draw'>('write');
+  const [mode, setMode] = useState<ReaderMode>('write');
   const [isEraser, setIsEraser] = useState(false);
   const [template, setTemplate] = useState('Blank');
   const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
@@ -385,21 +220,22 @@ export function Reader() {
   const navigate = useNavigate();
 
   const parseContent = (raw: string) => {
-    if (!raw) return { texts: [], drawing: '' };
+    if (!raw) return { texts: [], shapes: [], drawing: '' };
     try {
       const parsed = JSON.parse(raw);
-      if (parsed.texts) {
-        return { texts: parsed.texts, drawing: parsed.drawing || '' };
+      if (parsed.texts || parsed.shapes) {
+        return { texts: parsed.texts || [], shapes: parsed.shapes || [], drawing: parsed.drawing || '' };
       }
       if (parsed.text !== undefined || parsed.drawing !== undefined) {
         return { 
-          texts: parsed.text ? [{ id: 'legacy-' + Date.now(), x: 20, y: 44, content: parsed.text }] : [], 
+          texts: parsed.text ? [{ id: 'legacy-' + Date.now(), x: 20, y: 44, content: parsed.text, scale: 1 }] : [], 
+          shapes: [],
           drawing: parsed.drawing || '' 
         };
       }
-      return { texts: [{ id: 'legacy-raw', x: 20, y: 44, content: raw }], drawing: '' };
+      return { texts: [{ id: 'legacy-raw', x: 20, y: 44, content: raw, scale: 1 }], shapes: [], drawing: '' };
     } catch {
-      return { texts: [{ id: 'legacy-catch', x: 20, y: 44, content: raw }], drawing: '' };
+      return { texts: [{ id: 'legacy-catch', x: 20, y: 44, content: raw, scale: 1 }], shapes: [], drawing: '' };
     }
   };
 
@@ -417,7 +253,7 @@ export function Reader() {
         const querySnapshot = await getDocs(q);
         
         if (querySnapshot.empty) {
-          setPages([{ id: 'temp', pageNumber: 1, texts: [], drawing: '' }]);
+          setPages([{ id: 'temp', pageNumber: 1, texts: [], shapes: [], drawing: '' }]);
         } else {
           setPages(querySnapshot.docs.map(d => ({
             id: d.id,
@@ -464,7 +300,7 @@ export function Reader() {
     }
   };
 
-  const handlePageSave = async (newTexts: TextBlockData[], index: number, pageNumber: number) => {
+  const handlePageSave = async (newTexts: TextBlockData[], newShapes: ShapeBlockData[], index: number, pageNumber: number) => {
     const page = pages[index];
     let drawingData = page.drawing;
     const canvas = canvasRefs.current[pageNumber];
@@ -478,10 +314,11 @@ export function Reader() {
 
     const newPages = [...pages];
     newPages[index].texts = newTexts;
+    newPages[index].shapes = newShapes;
     newPages[index].drawing = drawingData;
     setPages(newPages);
     
-    const payload = JSON.stringify({ texts: newTexts, drawing: drawingData });
+    const payload = JSON.stringify({ texts: newTexts, shapes: newShapes, drawing: drawingData });
     await savePage(pageNumber, payload);
   };
 
@@ -506,31 +343,15 @@ export function Reader() {
         background: '#FFF', borderRadius: '12px', padding: '10px', display: 'flex', flexDirection: 'column',
         gap: '15px', boxShadow: '0 4px 15px rgba(0,0,0,0.1)', zIndex: 10
       }}>
-        <button 
-          onClick={() => { setMode('write'); setIsEraser(false); }} 
-          style={{ background: 'none', border: 'none', cursor: 'pointer', color: mode === 'write' ? '#000' : '#CCC' }}
-        >
-          <Type size={20} />
-        </button>
-        <button 
-          onClick={() => { setMode('draw'); setIsEraser(false); }} 
-          style={{ background: 'none', border: 'none', cursor: 'pointer', color: mode === 'draw' && !isEraser ? '#000' : '#CCC' }}
-        >
-          <Pencil size={20} />
-        </button>
-        <button 
-          onClick={() => { setMode('draw'); setIsEraser(true); }} 
-          style={{ background: 'none', border: 'none', cursor: 'pointer', color: mode === 'draw' && isEraser ? '#000' : '#CCC' }}
-        >
-          <Eraser size={20} />
-        </button>
+        <button onClick={() => { setMode('write'); setIsEraser(false); }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: mode === 'write' ? '#000' : '#CCC' }}><Type size={20} /></button>
+        <button onClick={() => { setMode('draw'); setIsEraser(false); }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: mode === 'draw' && !isEraser ? '#000' : '#CCC' }}><Pencil size={20} /></button>
+        <button onClick={() => { setMode('draw'); setIsEraser(true); }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: mode === 'draw' && isEraser ? '#000' : '#CCC' }}><Eraser size={20} /></button>
         <hr style={{ width: '100%', border: 'none', borderTop: '1px solid #EEE' }} />
-        <button onClick={() => {
-          Object.values(canvasRefs.current).forEach(c => c && c.undo && c.undo());
-        }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#555' }}><Undo size={20} /></button>
-        <button onClick={() => {
-          Object.values(canvasRefs.current).forEach(c => c && c.redo && c.redo());
-        }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#555' }}><Redo size={20} /></button>
+        <button onClick={() => { setMode('rectangle'); setIsEraser(false); }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: mode === 'rectangle' ? '#000' : '#CCC' }}><Square size={20} /></button>
+        <button onClick={() => { setMode('diamond'); setIsEraser(false); }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: mode === 'diamond' ? '#000' : '#CCC' }}><Diamond size={20} /></button>
+        <button onClick={() => { setMode('circle'); setIsEraser(false); }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: mode === 'circle' ? '#000' : '#CCC' }}><Circle size={20} /></button>
+        <button onClick={() => { setMode('arrow'); setIsEraser(false); }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: mode === 'arrow' ? '#000' : '#CCC' }}><ArrowRight size={20} /></button>
+        <button onClick={() => { setMode('line'); setIsEraser(false); }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: mode === 'line' ? '#000' : '#CCC' }}><Minus size={20} /></button>
       </div>
 
       {/* Flipbook with Navigation */}
@@ -593,14 +414,14 @@ export function Reader() {
               if (flip) {
                 const current = flip.getCurrentPageIndex();
                 if (current >= pages.length - 1 || current >= pages.length - 2) {
-                  const newPage = { id: 'page-' + Date.now(), pageNumber: pages.length + 1, texts: [], drawing: '' };
+                  const newPage: EnrichedPage = { id: 'page-' + Date.now(), pageNumber: pages.length + 1, texts: [], shapes: [], drawing: '' };
                   const newPages = [...pages, newPage];
                   setPages(newPages);
                   
                   if (user) {
                     await setDoc(doc(db, `users/${user.uid}/notebooks/${id}/pages`, newPage.pageNumber.toString()), {
                       pageNumber: newPage.pageNumber,
-                      content: JSON.stringify({ texts: [], drawing: '' })
+                      content: JSON.stringify({ texts: [], shapes: [], drawing: '' })
                     });
                   }
 

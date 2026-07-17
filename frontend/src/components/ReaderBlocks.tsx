@@ -18,7 +18,7 @@ export interface ShapeBlockData {
   endY: number;
 }
 
-export type ReaderMode = 'write' | 'draw' | 'rectangle' | 'circle' | 'diamond' | 'arrow' | 'line';
+export type ReaderMode = 'select' | 'write' | 'draw' | 'rectangle' | 'circle' | 'diamond' | 'arrow' | 'line';
 
 // Helper to calculate bounding box and SVG path for shapes
 export const renderShapeSvg = (shape: ShapeBlockData, isDraft = false) => {
@@ -188,7 +188,7 @@ export const DraggableShapeBlock = ({ block, onUpdate, onRemove, mode }: { block
         tabIndex={0}
         onFocus={() => setIsSelected(true)}
         onBlur={() => setIsSelected(false)}
-        onPointerDown={(e) => mode === 'write' ? startDrag(e) : null}
+        onPointerDown={(e) => (mode === 'write' || mode === 'select') ? startDrag(e) : null}
         onKeyDown={(e) => {
           if (e.key === 'Delete' || e.key === 'Backspace') {
             e.stopPropagation();
@@ -200,11 +200,11 @@ export const DraggableShapeBlock = ({ block, onUpdate, onRemove, mode }: { block
           left: x, top: y, width, height,
           zIndex: 60,
           outline: isSelected ? '1px solid #00bfff' : 'none',
-          cursor: mode === 'write' ? 'grab' : 'default',
+          cursor: (mode === 'write' || mode === 'select') ? 'grab' : 'default',
         }}
       >
         {/* Render Handles */}
-        {isSelected && mode === 'write' && (
+        {isSelected && (mode === 'write' || mode === 'select') && (
           isLine ? (
             <>
               <div onPointerDown={e => startResize(e, 'start')} style={{ position: 'absolute', left: coords.startX - x - 5, top: coords.startY - y - 5, width: 10, height: 10, background: '#00bfff', borderRadius: '50%', cursor: 'pointer' }} />
@@ -288,7 +288,7 @@ export const DraggableTextBlock = ({ block, onUpdate, onRemove, mode }: any) => 
   }, [block.id]);
 
   const handlePointerDown = (e: React.PointerEvent) => {
-    if (mode !== 'write') return;
+    if (mode !== 'write' && mode !== 'select') return;
     e.stopPropagation();
     isDragging.current = true;
     dragStart.current = { startX: e.clientX, startY: e.clientY, initialX: position.x, initialY: position.y, initialScale: scale };
@@ -318,10 +318,10 @@ export const DraggableTextBlock = ({ block, onUpdate, onRemove, mode }: any) => 
           border: isFocused ? '1px dashed #00bfff' : (isSelected ? '1px solid #00bfff' : '1px solid transparent'),
           borderRadius: '4px',
           background: isFocused ? 'rgba(255, 255, 255, 0.9)' : 'transparent',
-          pointerEvents: mode === 'write' ? 'auto' : 'none',
+          pointerEvents: (mode === 'write' || mode === 'select') ? 'auto' : 'none',
         }} 
       >
-        {(isSelected || isFocused) && mode === 'write' && (
+        {(isSelected || isFocused) && (mode === 'write' || mode === 'select') && (
           <div 
             style={{ position: 'absolute', top: '-45px', left: 0, background: 'white', padding: '4px', borderRadius: '6px', boxShadow: '0 2px 10px rgba(0,0,0,0.1)', zIndex: 100, display: 'flex', gap: '4px', transform: `scale(${1/scale})`, transformOrigin: 'top left' }} 
             onPointerDown={e => e.stopPropagation()}
@@ -352,12 +352,12 @@ export const DraggableTextBlock = ({ block, onUpdate, onRemove, mode }: any) => 
             onBlur={() => setIsSelected(false)}
             onPointerDown={(e) => { e.currentTarget.focus(); handlePointerDown(e); }}
             onKeyDown={(e) => { if (e.key === 'Delete' || e.key === 'Backspace') { e.stopPropagation(); onRemove(block.id); } }}
-            onDoubleClick={(e) => { e.stopPropagation(); if (mode === 'write') setIsFocused(true); }}
-            style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, cursor: mode === 'write' ? 'grab' : 'default', zIndex: 10, outline: 'none' }}
+            onDoubleClick={(e) => { e.stopPropagation(); if (mode === 'write' || mode === 'select') setIsFocused(true); }}
+            style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, cursor: (mode === 'write' || mode === 'select') ? 'grab' : 'default', zIndex: 10, outline: 'none' }}
           />
         )}
 
-        {isSelected && !isFocused && mode === 'write' && (
+        {isSelected && !isFocused && (mode === 'write' || mode === 'select') && (
           <div 
             onPointerDown={startResize} 
             style={{ position: 'absolute', right: -5, bottom: -5, width: 12, height: 12, background: '#00bfff', cursor: 'nwse-resize', borderRadius: '50%', zIndex: 20, transform: `scale(${1/scale})` }} 

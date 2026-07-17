@@ -6,7 +6,7 @@ import { db } from '../lib/firebase';
 import { collection, doc, getDoc, getDocs, setDoc, updateDoc, query, orderBy } from 'firebase/firestore';
 // @ts-ignore
 import HTMLFlipBook from 'react-pageflip';
-import { X, Settings, Headphones, Pencil, Type, Eraser, LayoutTemplate, Check, ChevronLeft, ChevronRight, Square, Circle, Diamond, ArrowRight, Minus } from 'lucide-react';
+import { X, Settings, Headphones, Pencil, Type, Eraser, LayoutTemplate, Check, ChevronLeft, ChevronRight, Square, Circle, Diamond, ArrowRight, Minus, Hand } from 'lucide-react';
 import { ReactSketchCanvas } from 'react-sketch-canvas';
 import { DraggableTextBlock, DraggableShapeBlock, renderShapeSvg } from '../components/ReaderBlocks';
 import type { TextBlockData, ShapeBlockData, ReaderMode } from '../components/ReaderBlocks';
@@ -56,7 +56,8 @@ const PageOverlay = ({
   page, 
   index, 
   pagesLength, 
-  mode, 
+  mode,
+  setMode,
   isEraser, 
   canvasRefs, 
   handlePageSave,
@@ -97,7 +98,7 @@ const PageOverlay = ({
   };
 
   const handlePointerDown = (e: React.PointerEvent) => {
-    if (mode === 'write' || mode === 'draw') return;
+    if (mode === 'write' || mode === 'draw' || mode === 'select') return;
     const rect = e.currentTarget.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
@@ -113,7 +114,7 @@ const PageOverlay = ({
   };
 
   const handlePointerMove = (e: React.PointerEvent) => {
-    if (!draftShape || mode === 'write' || mode === 'draw') return;
+    if (!draftShape || mode === 'write' || mode === 'draw' || mode === 'select') return;
     const rect = e.currentTarget.getBoundingClientRect();
     setDraftShape(prev => prev ? {
       ...prev,
@@ -129,6 +130,7 @@ const PageOverlay = ({
         const nextShapes = [...shapes, newShape];
         setShapes(nextShapes);
         handlePageSave(texts, nextShapes, index, page.pageNumber);
+        setMode('select');
       }
       setDraftShape(null);
     }
@@ -208,7 +210,7 @@ export function Reader() {
   const { id } = useParams();
   const [pages, setPages] = useState<EnrichedPage[]>([]);
   const [loading, setLoading] = useState(true);
-  const [mode, setMode] = useState<ReaderMode>('write');
+  const [mode, setMode] = useState<ReaderMode>('select');
   const [isEraser, setIsEraser] = useState(false);
   const [template, setTemplate] = useState('Blank');
   const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
@@ -343,6 +345,7 @@ export function Reader() {
         background: '#FFF', borderRadius: '12px', padding: '10px', display: 'flex', flexDirection: 'column',
         gap: '15px', boxShadow: '0 4px 15px rgba(0,0,0,0.1)', zIndex: 10
       }}>
+        <button onClick={() => { setMode('select'); setIsEraser(false); }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: mode === 'select' ? '#000' : '#CCC' }}><Hand size={20} /></button>
         <button onClick={() => { setMode('write'); setIsEraser(false); }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: mode === 'write' ? '#000' : '#CCC' }}><Type size={20} /></button>
         <button onClick={() => { setMode('draw'); setIsEraser(false); }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: mode === 'draw' && !isEraser ? '#000' : '#CCC' }}><Pencil size={20} /></button>
         <button onClick={() => { setMode('draw'); setIsEraser(true); }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: mode === 'draw' && isEraser ? '#000' : '#CCC' }}><Eraser size={20} /></button>
@@ -384,6 +387,7 @@ export function Reader() {
                 index={index} 
                 pagesLength={pages.length}
                 mode={mode}
+                setMode={setMode}
                 isEraser={isEraser}
                 canvasRefs={canvasRefs}
                 handlePageSave={handlePageSave}

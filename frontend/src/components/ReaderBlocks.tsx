@@ -89,6 +89,7 @@ export const DraggableShapeBlock = ({ block, onUpdate, onRemove, mode, setMode }
   const isDragging = useRef(false);
   const isResizing = useRef<string | null>(null); // 'start', 'end', 'tl', 'tr', 'bl', 'br'
   const dragStart = useRef({ startX: 0, startY: 0, initialCoords: coords });
+  const lastClickTime = useRef(0);
 
   const onUpdateRef = useRef(onUpdate);
   useEffect(() => { onUpdateRef.current = onUpdate; }, [onUpdate]);
@@ -180,6 +181,23 @@ export const DraggableShapeBlock = ({ block, onUpdate, onRemove, mode, setMode }
     dragStart.current = { startX: e.clientX, startY: e.clientY, initialCoords: coords };
   };
 
+  const handlePointerDown = (e: React.PointerEvent) => {
+    const now = Date.now();
+    const isDoubleClick = now - lastClickTime.current < 300;
+    lastClickTime.current = now;
+
+    if (isDoubleClick) {
+      e.stopPropagation();
+      setIsSelected(true);
+      setMode('select');
+      return;
+    }
+
+    if (mode === 'write' || mode === 'select') {
+      startDrag(e);
+    }
+  };
+
   const isLine = block.type === 'line' || block.type === 'arrow';
 
   return (
@@ -188,12 +206,7 @@ export const DraggableShapeBlock = ({ block, onUpdate, onRemove, mode, setMode }
         tabIndex={0}
         onFocus={() => setIsSelected(true)}
         onBlur={() => setIsSelected(false)}
-        onPointerDown={(e) => (mode === 'write' || mode === 'select') ? startDrag(e) : null}
-        onDoubleClick={(e) => {
-          e.stopPropagation();
-          setIsSelected(true);
-          setMode('select');
-        }}
+        onPointerDown={handlePointerDown}
         onKeyDown={(e) => {
           if (e.key === 'Delete' || e.key === 'Backspace') {
             e.stopPropagation();
@@ -241,6 +254,7 @@ export const DraggableTextBlock = ({ block, onUpdate, onRemove, mode, setMode }:
   const isDragging = useRef(false);
   const isResizing = useRef(false);
   const dragStart = useRef({ startX: 0, startY: 0, initialX: 0, initialY: 0, initialScale: 1 });
+  const lastClickTime = useRef(0);
 
   const [isSelected, setIsSelected] = useState(false);
 
@@ -299,6 +313,23 @@ export const DraggableTextBlock = ({ block, onUpdate, onRemove, mode, setMode }:
     dragStart.current = { startX: e.clientX, startY: e.clientY, initialX: position.x, initialY: position.y, initialScale: scale };
   };
 
+  const onPointerDownHitArea = (e: React.PointerEvent) => {
+    const now = Date.now();
+    const isDoubleClick = now - lastClickTime.current < 300;
+    lastClickTime.current = now;
+
+    if (isDoubleClick) {
+      e.stopPropagation();
+      setIsSelected(true);
+      setIsFocused(true);
+      setMode('select');
+      return;
+    }
+
+    e.currentTarget.focus();
+    handlePointerDown(e);
+  };
+
   const startResize = (e: React.PointerEvent) => {
     e.stopPropagation();
     isResizing.current = true;
@@ -355,9 +386,8 @@ export const DraggableTextBlock = ({ block, onUpdate, onRemove, mode, setMode }:
             tabIndex={0}
             onFocus={() => setIsSelected(true)}
             onBlur={() => setIsSelected(false)}
-            onPointerDown={(e) => { e.currentTarget.focus(); handlePointerDown(e); }}
+            onPointerDown={onPointerDownHitArea}
             onKeyDown={(e) => { if (e.key === 'Delete' || e.key === 'Backspace') { e.stopPropagation(); onRemove(block.id); } }}
-            onDoubleClick={(e) => { e.stopPropagation(); setIsSelected(true); setIsFocused(true); setMode('select'); }}
             style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, cursor: (mode === 'write' || mode === 'select') ? 'grab' : 'default', zIndex: 10, outline: 'none' }}
           />
         )}

@@ -68,6 +68,12 @@ const DraggableTextBlock = ({ block, onUpdate, onRemove, mode }: any) => {
 
   const [isSelected, setIsSelected] = useState(false);
 
+  // Keep a ref to the latest onUpdate to avoid stale closures in the global pointerup listener
+  const onUpdateRef = useRef(onUpdate);
+  useEffect(() => {
+    onUpdateRef.current = onUpdate;
+  }, [onUpdate]);
+
   useEffect(() => {
     positionRef.current = position;
   }, [position]);
@@ -100,7 +106,7 @@ const DraggableTextBlock = ({ block, onUpdate, onRemove, mode }: any) => {
     const handlePointerUp = () => {
       if (!isDragging.current) return;
       isDragging.current = false;
-      onUpdate(block.id, { x: positionRef.current.x, y: positionRef.current.y });
+      onUpdateRef.current(block.id, { x: positionRef.current.x, y: positionRef.current.y });
     };
 
     window.addEventListener('pointermove', handlePointerMove, { passive: false });

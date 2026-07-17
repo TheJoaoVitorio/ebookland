@@ -167,8 +167,8 @@ const PageOverlay = ({
       {/* Background Template */}
       <div className={`template-${template.replace(/ /g, '-')}`} style={{ position: 'absolute', inset: 0, pointerEvents: 'none', borderRadius: '10px' }} />
       
-      {texts.map(block => <DraggableTextBlock key={block.id} block={block} onUpdate={updateBlock} onRemove={removeBlock} mode={mode} />)}
-      {shapes.map(shape => <DraggableShapeBlock key={shape.id} block={shape} onUpdate={updateShape} onRemove={removeShape} mode={mode} />)}
+      {texts.map(block => <DraggableTextBlock key={block.id} block={block} onUpdate={updateBlock} onRemove={removeBlock} mode={mode} setMode={setMode} />)}
+      {shapes.map(shape => <DraggableShapeBlock key={shape.id} block={shape} onUpdate={updateShape} onRemove={removeShape} mode={mode} setMode={setMode} />)}
       
       {draftShape && renderShapeSvg(draftShape, true)}
 

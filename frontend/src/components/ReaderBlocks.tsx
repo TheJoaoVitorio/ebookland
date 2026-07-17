@@ -82,7 +82,7 @@ export const renderShapeSvg = (shape: ShapeBlockData, isDraft = false) => {
   );
 };
 
-export const DraggableShapeBlock = ({ block, onUpdate, onRemove, mode }: { block: ShapeBlockData, onUpdate: any, onRemove: any, mode: ReaderMode }) => {
+export const DraggableShapeBlock = ({ block, onUpdate, onRemove, mode, setMode }: { block: ShapeBlockData, onUpdate: any, onRemove: any, mode: ReaderMode, setMode: any }) => {
   const [isSelected, setIsSelected] = useState(false);
   const [coords, setCoords] = useState({ startX: block.startX, startY: block.startY, endX: block.endX, endY: block.endY });
   
@@ -189,6 +189,11 @@ export const DraggableShapeBlock = ({ block, onUpdate, onRemove, mode }: { block
         onFocus={() => setIsSelected(true)}
         onBlur={() => setIsSelected(false)}
         onPointerDown={(e) => (mode === 'write' || mode === 'select') ? startDrag(e) : null}
+        onDoubleClick={(e) => {
+          e.stopPropagation();
+          setIsSelected(true);
+          setMode('select');
+        }}
         onKeyDown={(e) => {
           if (e.key === 'Delete' || e.key === 'Backspace') {
             e.stopPropagation();
@@ -225,7 +230,7 @@ export const DraggableShapeBlock = ({ block, onUpdate, onRemove, mode }: { block
   );
 };
 
-export const DraggableTextBlock = ({ block, onUpdate, onRemove, mode }: any) => {
+export const DraggableTextBlock = ({ block, onUpdate, onRemove, mode, setMode }: any) => {
   const [isFocused, setIsFocused] = useState(false);
   const [position, setPosition] = useState({ x: block.x, y: block.y });
   const [scale, setScale] = useState(block.scale || 1);
@@ -352,7 +357,7 @@ export const DraggableTextBlock = ({ block, onUpdate, onRemove, mode }: any) => 
             onBlur={() => setIsSelected(false)}
             onPointerDown={(e) => { e.currentTarget.focus(); handlePointerDown(e); }}
             onKeyDown={(e) => { if (e.key === 'Delete' || e.key === 'Backspace') { e.stopPropagation(); onRemove(block.id); } }}
-            onDoubleClick={(e) => { e.stopPropagation(); if (mode === 'write' || mode === 'select') setIsFocused(true); }}
+            onDoubleClick={(e) => { e.stopPropagation(); setIsSelected(true); setIsFocused(true); setMode('select'); }}
             style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, cursor: (mode === 'write' || mode === 'select') ? 'grab' : 'default', zIndex: 10, outline: 'none' }}
           />
         )}

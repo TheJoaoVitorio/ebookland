@@ -18,7 +18,7 @@ export interface ShapeBlockData {
   endY: number;
 }
 
-export type ReaderMode = 'select' | 'write' | 'draw' | 'rectangle' | 'circle' | 'diamond' | 'arrow' | 'line';
+export type ReaderMode = 'select' | 'write' | 'rectangle' | 'circle' | 'diamond' | 'arrow' | 'line';
 
 // Helper to calculate bounding box and SVG path for shapes
 export const renderShapeSvg = (shape: ShapeBlockData, isDraft = false) => {

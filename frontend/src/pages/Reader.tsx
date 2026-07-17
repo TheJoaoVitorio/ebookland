@@ -6,8 +6,7 @@ import { db } from '../lib/firebase';
 import { collection, doc, getDoc, getDocs, setDoc, updateDoc, query, orderBy } from 'firebase/firestore';
 // @ts-ignore
 import HTMLFlipBook from 'react-pageflip';
-import { X, Settings, Headphones, Pencil, Type, Eraser, LayoutTemplate, Check, ChevronLeft, ChevronRight, Square, Circle, Diamond, ArrowRight, Minus, Hand } from 'lucide-react';
-import { ReactSketchCanvas } from 'react-sketch-canvas';
+import { X, Settings, Headphones, Type, LayoutTemplate, Check, ChevronLeft, ChevronRight, Square, Circle, Diamond, ArrowRight, Minus, MousePointer2 } from 'lucide-react';
 import { DraggableTextBlock, DraggableShapeBlock, renderShapeSvg } from '../components/ReaderBlocks';
 import type { TextBlockData, ShapeBlockData, ReaderMode } from '../components/ReaderBlocks';
 
@@ -58,8 +57,6 @@ const PageOverlay = ({
   pagesLength, 
   mode,
   setMode,
-  isEraser, 
-  canvasRefs, 
   handlePageSave,
   template
 }: any) => {
@@ -98,7 +95,7 @@ const PageOverlay = ({
   };
 
   const handlePointerDown = (e: React.PointerEvent) => {
-    if (mode === 'write' || mode === 'draw' || mode === 'select') return;
+    if (mode === 'write' || mode === 'select') return;
     const rect = e.currentTarget.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
@@ -114,7 +111,7 @@ const PageOverlay = ({
   };
 
   const handlePointerMove = (e: React.PointerEvent) => {
-    if (!draftShape || mode === 'write' || mode === 'draw' || mode === 'select') return;
+    if (!draftShape || mode === 'write' || mode === 'select') return;
     const rect = e.currentTarget.getBoundingClientRect();
     setDraftShape(prev => prev ? {
       ...prev,
@@ -157,10 +154,10 @@ const PageOverlay = ({
 
   return (
     <div 
-      style={{ position: 'absolute', inset: 0, overflow: 'hidden', cursor: mode === 'write' ? 'text' : (mode === 'draw' ? 'default' : 'crosshair') }}
+      style={{ position: 'absolute', inset: 0, overflow: 'hidden', cursor: mode === 'write' ? 'text' : 'crosshair' }}
       onClick={handleContainerClick}
       onPointerDown={(e) => {
-        if (mode === 'write' || mode === 'draw') e.stopPropagation();
+        if (mode === 'write') e.stopPropagation();
         else handlePointerDown(e);
       }}
       onPointerMove={handlePointerMove}
@@ -175,28 +172,13 @@ const PageOverlay = ({
       
       {draftShape && renderShapeSvg(draftShape, true)}
 
-      <div 
-        onPointerDown={(e) => e.stopPropagation()}
-        onMouseDown={(e) => e.stopPropagation()}
-        onTouchStart={(e) => e.stopPropagation()}
-        onClick={(e) => e.stopPropagation()}
-        style={{
-          position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-          zIndex: mode === 'draw' ? 50 : 20,
-          pointerEvents: mode === 'draw' ? 'auto' : 'none',
-          opacity: 1
-        }}
-      >
-        <ReactSketchCanvas
-          ref={ref => { if (ref) canvasRefs.current[page.pageNumber] = ref; }}
-          strokeWidth={isEraser ? 20 : 4}
-          strokeColor={isEraser ? '#FFFFFF' : '#000000'}
-          eraserWidth={20}
-          canvasColor="transparent"
-          backgroundImage={page.drawing || ''}
-          onStroke={() => handlePageSave(texts, shapes, index, page.pageNumber)}
+      {page.drawing && (
+        <img 
+          src={page.drawing} 
+          alt="Legacy Drawing" 
+          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', objectFit: 'contain' }} 
         />
-      </div>
+      )}
 
       <div style={{ position: 'absolute', bottom: '10px', right: '20px', fontSize: '0.8rem', color: '#999', zIndex: 1, pointerEvents: 'none' }}>
         {t('reader_page')} {page.pageNumber}/{pagesLength}
@@ -211,12 +193,10 @@ export function Reader() {
   const [pages, setPages] = useState<EnrichedPage[]>([]);
   const [loading, setLoading] = useState(true);
   const [mode, setMode] = useState<ReaderMode>('select');
-  const [isEraser, setIsEraser] = useState(false);
   const [template, setTemplate] = useState('Blank');
   const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
   
   const flipBookRef = useRef<any>(null);
-  const canvasRefs = useRef<{ [key: number]: any }>({});
   
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -304,15 +284,7 @@ export function Reader() {
 
   const handlePageSave = async (newTexts: TextBlockData[], newShapes: ShapeBlockData[], index: number, pageNumber: number) => {
     const page = pages[index];
-    let drawingData = page.drawing;
-    const canvas = canvasRefs.current[pageNumber];
-    
-    // Always attempt to get the latest drawing data if canvas is active
-    if (canvas) {
-      try {
-        drawingData = await canvas.exportImage('png');
-      } catch (e) { }
-    }
+    const drawingData = page.drawing;
 
     const newPages = [...pages];
     newPages[index].texts = newTexts;
@@ -345,16 +317,14 @@ export function Reader() {
         background: '#FFF', borderRadius: '12px', padding: '10px', display: 'flex', flexDirection: 'column',
         gap: '15px', boxShadow: '0 4px 15px rgba(0,0,0,0.1)', zIndex: 10
       }}>
-        <button onClick={() => { setMode('select'); setIsEraser(false); }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: mode === 'select' ? '#000' : '#CCC' }}><Hand size={20} /></button>
-        <button onClick={() => { setMode('write'); setIsEraser(false); }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: mode === 'write' ? '#000' : '#CCC' }}><Type size={20} /></button>
-        <button onClick={() => { setMode('draw'); setIsEraser(false); }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: mode === 'draw' && !isEraser ? '#000' : '#CCC' }}><Pencil size={20} /></button>
-        <button onClick={() => { setMode('draw'); setIsEraser(true); }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: mode === 'draw' && isEraser ? '#000' : '#CCC' }}><Eraser size={20} /></button>
+        <button onClick={() => setMode('select')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: mode === 'select' ? '#000' : '#CCC' }}><MousePointer2 size={20} /></button>
+        <button onClick={() => setMode('write')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: mode === 'write' ? '#000' : '#CCC' }}><Type size={20} /></button>
         <hr style={{ width: '100%', border: 'none', borderTop: '1px solid #EEE' }} />
-        <button onClick={() => { setMode('rectangle'); setIsEraser(false); }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: mode === 'rectangle' ? '#000' : '#CCC' }}><Square size={20} /></button>
-        <button onClick={() => { setMode('diamond'); setIsEraser(false); }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: mode === 'diamond' ? '#000' : '#CCC' }}><Diamond size={20} /></button>
-        <button onClick={() => { setMode('circle'); setIsEraser(false); }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: mode === 'circle' ? '#000' : '#CCC' }}><Circle size={20} /></button>
-        <button onClick={() => { setMode('arrow'); setIsEraser(false); }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: mode === 'arrow' ? '#000' : '#CCC' }}><ArrowRight size={20} /></button>
-        <button onClick={() => { setMode('line'); setIsEraser(false); }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: mode === 'line' ? '#000' : '#CCC' }}><Minus size={20} /></button>
+        <button onClick={() => setMode('rectangle')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: mode === 'rectangle' ? '#000' : '#CCC' }}><Square size={20} /></button>
+        <button onClick={() => setMode('diamond')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: mode === 'diamond' ? '#000' : '#CCC' }}><Diamond size={20} /></button>
+        <button onClick={() => setMode('circle')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: mode === 'circle' ? '#000' : '#CCC' }}><Circle size={20} /></button>
+        <button onClick={() => setMode('arrow')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: mode === 'arrow' ? '#000' : '#CCC' }}><ArrowRight size={20} /></button>
+        <button onClick={() => setMode('line')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: mode === 'line' ? '#000' : '#CCC' }}><Minus size={20} /></button>
       </div>
 
       {/* Flipbook with Navigation */}
@@ -388,8 +358,6 @@ export function Reader() {
                 pagesLength={pages.length}
                 mode={mode}
                 setMode={setMode}
-                isEraser={isEraser}
-                canvasRefs={canvasRefs}
                 handlePageSave={handlePageSave}
                 template={template}
               />

@@ -9,19 +9,17 @@ const TypewriterText = ({ text }: { text: string }) => {
   const [isVisible, setIsVisible] = useState(false);
   const elementRef = useRef<HTMLSpanElement>(null);
 
-  // Observer para detectar quando o elemento entra na tela
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting) {
           setIsVisible(true);
         } else {
-          // Resetar quando sai da tela para poder re-animar ao voltar (opcional, mas dá um efeito legal)
           setIsVisible(false);
           setDisplayed('');
         }
       },
-      { threshold: 0.5 } // Só ativa quando 50% do texto estiver visível
+      { threshold: 0.5 }
     );
     
     if (elementRef.current) {
@@ -30,7 +28,6 @@ const TypewriterText = ({ text }: { text: string }) => {
     return () => observer.disconnect();
   }, []);
 
-  // Efeito de digitação que só roda se estiver visível
   useEffect(() => {
     if (!isVisible) return;
     
@@ -69,12 +66,10 @@ const FeatureCard = ({ title, highlight, items, variant = 'paper' }: any) => {
       transform: isPostIt ? 'rotate(-2deg)' : isBook ? 'rotate(1deg)' : 'rotate(0deg)',
       position: 'relative'
     }}>
-      {/* Detalhe visual de folha pautada se for paper */}
       {!isPostIt && !isBook && (
         <div style={{ position: 'absolute', left: '24px', top: 0, bottom: 0, width: '1px', backgroundColor: '#FFCCCC' }} />
       )}
 
-      {/* Detalhe de fita adesiva se for postit */}
       {isPostIt && (
         <div style={{ position: 'absolute', top: '-10px', left: '50%', transform: 'translateX(-50%) rotate(-3deg)', width: '80px', height: '20px', backgroundColor: 'rgba(255,255,255,0.4)', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }} />
       )}
@@ -127,7 +122,6 @@ export function Home() {
   const navigate = useNavigate();
   const { t: originalT, i18n } = useTranslation();
   
-  // Override t() to wrap all translations in the typing animation automatically!
   const t = (key: string) => <TypewriterText text={originalT(key)} />;
 
   const handleLogin = async (e: React.MouseEvent) => {
@@ -148,16 +142,16 @@ export function Home() {
     <div className="snap-container" style={{ backgroundColor: '#FEFCF5', fontFamily: '"Outfit", "Inter", sans-serif' }}>
       
       {/* HEADER FIXO */}
-      <header style={{
+      <header className="home-header" style={{
         position: 'fixed',
         top: '16px', left: '16px', right: '16px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
         zIndex: 1000,
-        pointerEvents: 'none' // Allows clicking through the empty space of the header
+        pointerEvents: 'none'
       }}>
-        <div style={{ 
+        <div className="mobile-header-left" style={{ 
           display: 'flex', alignItems: 'center', gap: '10px', color: '#2B1A07', pointerEvents: 'auto',
           backgroundColor: 'rgba(254, 252, 245, 0.8)', padding: '8px 16px', borderRadius: '20px', backdropFilter: 'blur(10px)'
         }}>
@@ -165,7 +159,7 @@ export function Home() {
           <span style={{ fontSize: '1.2rem', fontWeight: 800, letterSpacing: '-1px' }}>ebookland</span>
         </div>
         
-        <div style={{ display: 'flex', alignItems: 'center', gap: '20px', pointerEvents: 'auto' }}>
+        <div className="mobile-header-right" style={{ display: 'flex', alignItems: 'center', gap: '20px', pointerEvents: 'auto' }}>
           {/* Language Switcher */}
           <div style={{ 
             display: 'flex', alignItems: 'center', backgroundColor: '#FFF', padding: '6px 12px',
@@ -191,7 +185,7 @@ export function Home() {
             </button>
           </div>
 
-          <button style={{
+          <button className="mobile-login-btn" style={{
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -220,29 +214,29 @@ export function Home() {
             <div style={{ backgroundColor: '#FFF', borderRadius: '50%', padding: '2px', display: 'flex' }}>
               <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" style={{ width: '18px', height: '18px' }} />
             </div>
-            <span style={{ letterSpacing: '1px' }}>{t('login_btn')}</span>
+            <span className="mobile-login-text" style={{ letterSpacing: '1px' }}>{t('login_btn')}</span>
           </button>
         </div>
       </header>
 
       {/* SEÇÃO 1: HERO */}
       <section className="snap-section" style={{ padding: '0' }}>
-        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          {/* Lado Esquerdo - Textos (Absolute Position) */}
-          <div style={{ position: 'absolute', left: '10vw', top: '25vh', zIndex: 10, maxWidth: '500px' }}>
-            <p style={{ color: '#F47E3B', fontFamily: '"Caveat", cursive', fontSize: '1.8rem', margin: '0 0 -10px 0', transform: 'rotate(-4deg)' }}>{t('hero_grownups')}</p>
+        <div className="mobile-hero-container" style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          {/* Lado Esquerdo - Textos */}
+          <div className="mobile-hero-text" style={{ position: 'absolute', left: '10vw', top: '25vh', zIndex: 10, maxWidth: '500px' }}>
+            <p className="mobile-hero-grownups" style={{ color: '#F47E3B', fontFamily: '"Caveat", cursive', fontSize: '1.8rem', margin: '0 0 -10px 0', transform: 'rotate(-4deg)' }}>{t('hero_grownups')}</p>
             
-            <h1 style={{ fontSize: '7rem', lineHeight: '0.9', color: '#2B1A07', margin: '0 0 2rem 0', fontWeight: 900, letterSpacing: '-4px' }}>
+            <h1 className="mobile-hero-title" style={{ fontSize: '7rem', lineHeight: '0.9', color: '#2B1A07', margin: '0 0 2rem 0', fontWeight: 900, letterSpacing: '-4px' }}>
               {t('hero_meet')}<br/>{t('hero_ebooklandia')}
             </h1>
             
-            <p style={{ fontSize: '1.6rem', color: '#2B1A07', lineHeight: '1.3', margin: '0 0 3rem 0', fontWeight: 500 }}>
+            <p className="mobile-hero-subtitle" style={{ fontSize: '1.6rem', color: '#2B1A07', lineHeight: '1.3', margin: '0 0 3rem 0', fontWeight: 500 }}>
               {t('hero_description1')} <span style={{ color: '#F47E3B', fontFamily: '"Caveat", cursive', fontSize: '2rem', fontStyle: 'italic' }}>{t('hero_actually')}</span><br/>
               {t('hero_description2')}
             </p>
             
-            <div onClick={handleLogin} style={{ textDecoration: 'none' }}>
-              <button style={{
+            <div onClick={handleLogin} style={{ textDecoration: 'none', width: '100%' }}>
+              <button className="mobile-hero-btn" style={{
                 backgroundColor: '#FEFCF5',
                 border: '2px solid #2B1A07',
                 color: '#2B1A07',
@@ -269,7 +263,7 @@ export function Home() {
           </div>
 
           {/* Ilustração Caderno Centralizado no Fundo */}
-          <div style={{ position: 'absolute', right: '15vw', top: '50%', transform: 'translateY(-50%)' }}>
+          <div className="mobile-hero-img" style={{ position: 'absolute', right: '15vw', top: '50%', transform: 'translateY(-50%)' }}>
              <div style={{
               width: '450px', height: '600px', backgroundColor: '#A87A5B',
               borderRadius: '16px 24px 24px 16px',
@@ -277,7 +271,7 @@ export function Home() {
               transform: 'rotate(8deg)', position: 'relative',
               borderRight: '12px solid #8B5A3B', borderTop: '2px solid #C8997A', borderBottom: '4px solid #8B5A3B'
             }}>
-              <div style={{
+              <div className='book-info' style={{
                 position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%) rotate(-4deg)',
                 width: '260px', height: '150px', backgroundColor: '#FEFCF5', borderRadius: '8px', border: '2px solid #2B1A07', padding: '16px', display: 'flex', flexDirection: 'column', boxShadow: '2px 2px 5px rgba(0,0,0,0.1)'
               }}>
@@ -307,32 +301,34 @@ export function Home() {
           backgroundImage: 'radial-gradient(#ccc 1px, transparent 1px)', 
           backgroundSize: '24px 24px', backgroundPosition: '12px 12px',
           opacity: 0.8
-        }}>
+        }}></div>
+
+        <div className="mobile-section-234-container" style={{ position: 'absolute', inset: 0, zIndex: 10 }}>
           {/* Elementos flutuantes simulando o Canvas */}
-          <div style={{ position: 'absolute', top: '25%', left: '45%', padding: '12px 24px', border: '2px dashed #3B82F6', borderRadius: '8px', background: 'rgba(255,255,255,0.9)', fontFamily: '"Caveat", cursive', fontSize: '2.2rem', color: '#2B1A07', transform: 'rotate(-2deg)', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
+          <div className="mobile-float-text" style={{ position: 'absolute', top: '25%', left: '45%', padding: '12px 24px', border: '2px dashed #3B82F6', borderRadius: '8px', background: 'rgba(255,255,255,0.9)', fontFamily: '"Caveat", cursive', fontSize: '2.2rem', color: '#2B1A07', transform: 'rotate(-2deg)', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
             {t('canvas_click')}
           </div>
-          <div style={{ position: 'absolute', top: '55%', left: '60%', padding: '12px 24px', border: '1px solid transparent', fontFamily: '"Kalam", cursive', fontSize: '1.8rem', color: '#2B1A07', transform: 'rotate(3deg)' }}>
+          <div className="mobile-float-text" style={{ position: 'absolute', top: '55%', left: '60%', padding: '12px 24px', border: '1px solid transparent', fontFamily: '"Kalam", cursive', fontSize: '1.8rem', color: '#2B1A07', transform: 'rotate(3deg)' }}>
             {t('canvas_drag')}
           </div>
-          <div style={{ position: 'absolute', top: '75%', left: '40%', padding: '12px 24px', border: '1px solid transparent', fontFamily: '"Caveat", cursive', fontSize: '2rem', color: '#2B1A07', transform: 'rotate(-1deg)', opacity: 0.5 }}>
+          <div className="mobile-float-text" style={{ position: 'absolute', top: '75%', left: '40%', padding: '12px 24px', border: '1px solid transparent', fontFamily: '"Caveat", cursive', fontSize: '2rem', color: '#2B1A07', transform: 'rotate(-1deg)', opacity: 0.5 }}>
             {t('canvas_like')}
           </div>
-        </div>
 
-        {/* Floating Card */}
-        <div style={{ position: 'absolute', top: '50%', left: '8vw', transform: 'translateY(-50%)', zIndex: 10 }}>
-          <FeatureCard 
-            variant="postit"
-            title={t('card1_title')}
-            highlight={t('card1_highlight')}
-            items={[
-              { text: t('card1_item1'), active: true },
-              { text: t('card1_item2'), active: false },
-              { text: t('card1_item3'), active: false },
-              { text: t('card1_item4'), active: false }
-            ]}
-          />
+          {/* Floating Card */}
+          <div className="mobile-card-container" style={{ position: 'absolute', top: '50%', left: '8vw', transform: 'translateY(-50%)', zIndex: 10 }}>
+            <FeatureCard 
+              variant="postit"
+              title={t('card1_title')}
+              highlight={t('card1_highlight')}
+              items={[
+                { text: t('card1_item1'), active: true },
+                { text: t('card1_item2'), active: false },
+                { text: t('card1_item3'), active: false },
+                { text: t('card1_item4'), active: false }
+              ]}
+            />
+          </div>
         </div>
       </section>
 
@@ -343,31 +339,33 @@ export function Home() {
           position: 'absolute', inset: 0, zIndex: 1,
           backgroundImage: 'linear-gradient(#e0e0e0 1px, transparent 1px)', 
           backgroundSize: '100% 32px', backgroundPosition: '0 32px'
-        }}>
-          <div style={{ position: 'absolute', top: '20%', left: '15%', fontFamily: '"Caveat", cursive', fontSize: '3rem', color: '#2B1A07', transform: 'rotate(-1deg)' }}>
+        }}></div>
+
+        <div className="mobile-section-234-container" style={{ position: 'absolute', inset: 0, zIndex: 10 }}>
+          <div className="mobile-float-text" style={{ position: 'absolute', top: '20%', left: '15%', fontFamily: '"Caveat", cursive', fontSize: '3rem', color: '#2B1A07', transform: 'rotate(-1deg)' }}>
             {t('fonts_collection')}
           </div>
-          <div style={{ position: 'absolute', top: '40%', left: '20%', fontFamily: '"Kalam", cursive', fontSize: '2.5rem', color: '#F47E3B', transform: 'rotate(2deg)' }}>
+          <div className="mobile-float-text" style={{ position: 'absolute', top: '40%', left: '20%', fontFamily: '"Kalam", cursive', fontSize: '2.5rem', color: '#F47E3B', transform: 'rotate(2deg)' }}>
             {t('fonts_express')}
           </div>
-          <div style={{ position: 'absolute', top: '65%', left: '10%', fontFamily: '"Shadows Into Light", cursive', fontSize: '3.5rem', color: '#22C55E', transform: 'rotate(-2deg)' }}>
+          <div className="mobile-float-text" style={{ position: 'absolute', top: '65%', left: '10%', fontFamily: '"Shadows Into Light", cursive', fontSize: '3.5rem', color: '#22C55E', transform: 'rotate(-2deg)' }}>
             {t('fonts_vibe')}
           </div>
-        </div>
 
-        {/* Floating Card */}
-        <div style={{ position: 'absolute', top: '50%', right: '8vw', transform: 'translateY(-50%)', zIndex: 10 }}>
-          <FeatureCard 
-            variant="paper"
-            title={t('card2_title')}
-            highlight={t('card2_highlight')}
-            items={[
-              { text: t('card2_item1'), active: true },
-              { text: t('card2_item2'), active: false },
-              { text: t('card2_item3'), active: false },
-              { text: t('card2_item4'), active: false }
-            ]}
-          />
+          {/* Floating Card */}
+          <div className="mobile-card-container" style={{ position: 'absolute', top: '50%', right: '8vw', transform: 'translateY(-50%)', zIndex: 10 }}>
+            <FeatureCard 
+              variant="paper"
+              title={t('card2_title')}
+              highlight={t('card2_highlight')}
+              items={[
+                { text: t('card2_item1'), active: true },
+                { text: t('card2_item2'), active: false },
+                { text: t('card2_item3'), active: false },
+                { text: t('card2_item4'), active: false }
+              ]}
+            />
+          </div>
         </div>
       </section>
 
@@ -385,78 +383,80 @@ export function Home() {
           <div style={{ position: 'absolute', top: '75%', left: '15%', opacity: 0.5, transform: 'scale(0.8)' }}>
             <svg width="120" height="80" viewBox="0 0 24 24" fill="#FFFFFF"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg>
           </div>
+        </div>
           
-          <div style={{ position: 'absolute', top: '35%', left: '8vw', maxWidth: '500px' }}>
-            <h2 style={{ fontFamily: '"Kalam", cursive', fontSize: '5rem', lineHeight: '1', color: '#0284C7', transform: 'rotate(-3deg)' }}>
+        <div className="mobile-section-234-container" style={{ position: 'absolute', inset: 0, zIndex: 10 }}>
+          <div className="mobile-save-text-container" style={{ position: 'absolute', top: '35%', left: '8vw', maxWidth: '500px' }}>
+            <h2 className="mobile-save-title" style={{ fontFamily: '"Kalam", cursive', fontSize: '5rem', lineHeight: '1', color: '#0284C7', transform: 'rotate(-3deg)' }}>
               {t('save_relax')}<br/>
               <span style={{ color: '#0369A1' }}>{t('save_saved')}</span>
             </h2>
-            <p style={{ fontFamily: '"Caveat", cursive', fontSize: '2.5rem', color: '#0EA5E9', marginTop: '20px', transform: 'rotate(-2deg)' }}>
+            <p className="mobile-save-subtitle" style={{ fontFamily: '"Caveat", cursive', fontSize: '2.5rem', color: '#0EA5E9', marginTop: '20px', transform: 'rotate(-2deg)' }}>
               {t('save_clouds')}
             </p>
           </div>
-        </div>
 
-        {/* Floating Card - Livro */}
-        <div style={{ position: 'absolute', top: '50%', right: '8vw', transform: 'translateY(-50%)', zIndex: 10 }}>
-          <div style={{
-            width: '100%', minWidth: '420px',
-            backgroundColor: '#F4EDE4',
-            border: '1px solid #DED6D2',
-            borderLeft: '16px solid #A87A5B',
-            borderRadius: '4px 16px 16px 4px',
-            padding: '32px 0 16px 0',
-            boxShadow: '10px 10px 30px rgba(0,20,50,0.15), inset 2px 0 5px rgba(255,255,255,0.5)',
-            display: 'flex', flexDirection: 'column',
-            transform: 'rotate(2deg)'
-          }}>
-            <div style={{ padding: '0 32px', marginBottom: '24px' }}>
-              <h2 style={{ fontFamily: '"Patrick Hand", cursive', fontSize: '2.5rem', lineHeight: '1.2', fontWeight: 700, color: '#2B1A07', letterSpacing: '0px' }}>
-                {t('card3_title')} <br/><span style={{ color: '#0284C7' }}>{t('card3_highlight')}</span>
-              </h2>
-            </div>
-            
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
-              {[
-                { text: t('card3_item1'), active: true },
-                { text: t('card3_item2'), active: false },
-                { text: t('card3_item3'), active: false },
-                { text: t('card3_item4'), active: false }
-              ].map((item: any, idx: number) => (
-                <div key={idx} style={{ width: '100%' }}>
-                  <div style={{ height: '1px', backgroundColor: 'rgba(43, 26, 7, 0.1)', width: '100%' }} />
-                  <div style={{ padding: '16px 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontFamily: '"Patrick Hand", cursive', fontSize: '1.4rem', fontWeight: item.active ? 600 : 500, color: item.active ? '#0284C7' : '#2B1A07' }}>
-                      {item.text}
-                    </span>
-                    <span style={{ fontFamily: '"Outfit", serif', fontSize: '1.2rem', fontWeight: 600, color: '#2B1A07', opacity: item.active ? 1 : 0.4 }}>
-                      {['I', 'II', 'III', 'IV'][idx]}
-                    </span>
+          {/* Floating Card - Livro */}
+          <div className="mobile-card-container" style={{ position: 'absolute', top: '50%', right: '8vw', transform: 'translateY(-50%)', zIndex: 10 }}>
+            <div style={{
+              width: '100%', minWidth: '420px',
+              backgroundColor: '#F4EDE4',
+              border: '1px solid #DED6D2',
+              borderLeft: '16px solid #A87A5B',
+              borderRadius: '4px 16px 16px 4px',
+              padding: '32px 0 16px 0',
+              boxShadow: '10px 10px 30px rgba(0,20,50,0.15), inset 2px 0 5px rgba(255,255,255,0.5)',
+              display: 'flex', flexDirection: 'column',
+              transform: 'rotate(2deg)'
+            }}>
+              <div style={{ padding: '0 32px', marginBottom: '24px' }}>
+                <h2 style={{ fontFamily: '"Patrick Hand", cursive', fontSize: '2.5rem', lineHeight: '1.2', fontWeight: 700, color: '#2B1A07', letterSpacing: '0px' }}>
+                  {t('card3_title')} <br/><span style={{ color: '#0284C7' }}>{t('card3_highlight')}</span>
+                </h2>
+              </div>
+              
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                {[
+                  { text: t('card3_item1'), active: true },
+                  { text: t('card3_item2'), active: false },
+                  { text: t('card3_item3'), active: false },
+                  { text: t('card3_item4'), active: false }
+                ].map((item: any, idx: number) => (
+                  <div key={idx} style={{ width: '100%' }}>
+                    <div style={{ height: '1px', backgroundColor: 'rgba(43, 26, 7, 0.1)', width: '100%' }} />
+                    <div style={{ padding: '16px 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontFamily: '"Patrick Hand", cursive', fontSize: '1.4rem', fontWeight: item.active ? 600 : 500, color: item.active ? '#0284C7' : '#2B1A07' }}>
+                        {item.text}
+                      </span>
+                      <span style={{ fontFamily: '"Outfit", serif', fontSize: '1.2rem', fontWeight: 600, color: '#2B1A07', opacity: item.active ? 1 : 0.4 }}>
+                        {['I', 'II', 'III', 'IV'][idx]}
+                      </span>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
-            <div style={{ padding: '32px', display: 'flex', justifyContent: 'center' }}>
-               <div onClick={handleLogin} style={{ textDecoration: 'none', width: '100%' }}>
-                  <button style={{
-                    width: '100%',
-                    backgroundColor: '#F47E3B',
-                    border: 'none',
-                    color: '#FFF',
-                    padding: '16px 32px',
-                    fontSize: '1.1rem',
-                    fontWeight: 700,
-                    borderRadius: '30px',
-                    cursor: 'pointer',
-                    boxShadow: '0 4px 15px rgba(244, 126, 59, 0.3)',
-                    transition: 'all 0.2s',
-                  }}
-                  onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
-                  onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
-                  >
-                    {t('save_cta')}
-                  </button>
-                </div>
+                ))}
+              </div>
+              <div style={{ padding: '32px', display: 'flex', justifyContent: 'center' }}>
+                 <div onClick={handleLogin} style={{ textDecoration: 'none', width: '100%' }}>
+                    <button style={{
+                      width: '100%',
+                      backgroundColor: '#F47E3B',
+                      border: 'none',
+                      color: '#FFF',
+                      padding: '16px 32px',
+                      fontSize: '1.1rem',
+                      fontWeight: 700,
+                      borderRadius: '30px',
+                      cursor: 'pointer',
+                      boxShadow: '0 4px 15px rgba(244, 126, 59, 0.3)',
+                      transition: 'all 0.2s',
+                    }}
+                    onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+                    onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+                    >
+                      {t('save_cta')}
+                    </button>
+                  </div>
+              </div>
             </div>
           </div>
         </div>

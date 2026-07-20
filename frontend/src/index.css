@@ -360,7 +360,7 @@ input, textarea, [contenteditable="true"] {
 
 /* Scroll Snapping for Landing Page */
 .snap-container {
-  height: 100vh;
+  height: 100dvh;
   overflow-y: scroll;
   scroll-snap-type: y mandatory;
   scroll-behavior: smooth;
@@ -368,7 +368,7 @@ input, textarea, [contenteditable="true"] {
 }
 
 .snap-section {
-  height: 100vh;
+  height: 100dvh;
   width: 100%;
   scroll-snap-align: start;
   position: relative;
@@ -376,4 +376,140 @@ input, textarea, [contenteditable="true"] {
   align-items: center;
   justify-content: center;
   overflow: hidden;
+}
+
+/* --- Mobile Only Overrides --- */
+@media (max-width: 768px) {
+  .snap-container {
+    height: 100dvh !important;
+  }
+  .snap-section {
+    height: 100dvh !important;
+  }
+  
+  .mobile-header-left {
+    padding: 6px 12px !important;
+  }
+  
+  .mobile-header-right {
+    gap: 10px !important;
+  }
+  
+  .mobile-login-btn {
+    padding: 8px 16px !important;
+  }
+  
+  .mobile-login-text {
+    display: none !important;
+  }
+
+  .mobile-hero-container {
+    position: relative !important;
+    flex-direction: column !important;
+    justify-content: flex-start !important;
+    align-items: flex-start !important;
+    padding-top: 60px !important;
+  }
+
+  .book-info{
+    top: 20% !important;
+  }
+
+  .mobile-hero-text {
+    position: relative !important;
+    left: 0 !important;
+    top: 0 !important;
+    max-width: 100% !important;
+    padding: 0 24px !important;
+    margin-top: 20vh !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    text-align: left !important;
+  }
+
+  .mobile-hero-grownups {
+    font-size: 1.5rem !important;
+  }
+
+  .mobile-hero-title {
+    font-size: 3.5rem !important;
+    word-break: break-word !important;
+    margin-bottom: 1rem !important;
+    line-height: 1 !important;
+  }
+
+  .mobile-hero-subtitle {
+    font-size: 1.3rem !important;
+    margin-bottom: 2rem !important;
+    max-width: 80% !important;
+    line-height: 1.3 !important;
+  }
+  
+  .mobile-hero-btn {
+    width: 100% !important;
+    padding: 16px !important;
+    font-size: 1.2rem !important;
+  }
+
+  .mobile-hero-img {
+    position: absolute !important;
+    left: -15% !important;
+    right: auto !important;
+    top: 5% !important;
+    transform: scale(0.9) !important;
+    transform-origin: top left !important;
+    z-index: 0 !important;
+    opacity: 1 !important;
+  }
+
+  .mobile-section-234-container {
+    display: flex !important;
+    flex-direction: column !important;
+    padding-top: 60px !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 15px !important;
+  }
+
+  .mobile-float-text {
+    position: static !important;
+    transform: rotate(0deg) !important;
+    text-align: center !important;
+    font-size: 1.5rem !important;
+    margin: 0 !important;
+    padding: 10px 20px !important;
+  }
+
+  .mobile-card-container {
+    position: relative !important;
+    top: auto !important;
+    left: auto !important;
+    right: auto !important;
+    transform: translateY(0) scale(0.9) !important;
+    margin: -10px auto 0 auto !important;
+    width: 100% !important;
+    display: flex !important;
+    justify-content: center !important;
+  }
+  
+  .mobile-save-text-container {
+    position: relative !important;
+    top: auto !important;
+    left: auto !important;
+    transform: none !important;
+    width: 100% !important;
+    padding: 20px 24px !important;
+    box-sizing: border-box !important;
+    margin-top: 20px !important;
+    text-align: center !important;
+  }
+  
+  .mobile-save-title {
+    font-size: 3rem !important;
+  }
+  
+  .mobile-save-subtitle {
+    font-size: 1.5rem !important;
+    margin-top: 10px !important;
+  }
 }

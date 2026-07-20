@@ -326,7 +326,7 @@ export const DraggableTextBlock = ({ block, onUpdate, onRemove, mode, setMode }:
       return;
     }
 
-    e.currentTarget.focus();
+    (e.currentTarget as HTMLElement).focus();
     handlePointerDown(e);
   };
 

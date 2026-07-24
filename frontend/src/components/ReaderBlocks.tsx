@@ -168,6 +168,12 @@ export const DraggableShapeBlock = ({ block, onUpdate, onRemove, mode, setMode }
   const width = Math.abs(coords.startX - coords.endX);
   const height = Math.abs(coords.startY - coords.endY);
 
+  const hitPadding = 10;
+  const hitX = x - hitPadding;
+  const hitY = y - hitPadding;
+  const hitWidth = width + hitPadding * 2;
+  const hitHeight = height + hitPadding * 2;
+
   const startDrag = (e: React.PointerEvent) => {
     e.stopPropagation();
     isDragging.current = true;
@@ -215,7 +221,7 @@ export const DraggableShapeBlock = ({ block, onUpdate, onRemove, mode, setMode }
         }}
         style={{
           position: 'absolute',
-          left: x, top: y, width, height,
+          left: hitX, top: hitY, width: hitWidth, height: hitHeight,
           zIndex: 60,
           outline: isSelected ? '1px solid #00bfff' : 'none',
           cursor: (mode === 'write' || mode === 'select') ? 'grab' : 'default',
@@ -225,8 +231,8 @@ export const DraggableShapeBlock = ({ block, onUpdate, onRemove, mode, setMode }
         {isSelected && (mode === 'write' || mode === 'select') && (
           isLine ? (
             <>
-              <div onPointerDown={e => startResize(e, 'start')} style={{ position: 'absolute', left: coords.startX - x - 5, top: coords.startY - y - 5, width: 10, height: 10, background: '#00bfff', borderRadius: '50%', cursor: 'pointer' }} />
-              <div onPointerDown={e => startResize(e, 'end')} style={{ position: 'absolute', left: coords.endX - x - 5, top: coords.endY - y - 5, width: 10, height: 10, background: '#00bfff', borderRadius: '50%', cursor: 'pointer' }} />
+              <div onPointerDown={e => startResize(e, 'start')} style={{ position: 'absolute', left: coords.startX - hitX - 5, top: coords.startY - hitY - 5, width: 10, height: 10, background: '#00bfff', borderRadius: '50%', cursor: 'pointer' }} />
+              <div onPointerDown={e => startResize(e, 'end')} style={{ position: 'absolute', left: coords.endX - hitX - 5, top: coords.endY - hitY - 5, width: 10, height: 10, background: '#00bfff', borderRadius: '50%', cursor: 'pointer' }} />
             </>
           ) : (
             <>
